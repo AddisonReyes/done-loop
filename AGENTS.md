@@ -1,9 +1,11 @@
 <!-- BEGIN:nextjs-agent-rules -->
+
 # This is NOT the Next.js you know
 
 This repo uses Next.js `16.2.4` (see `package.json`). APIs, conventions, and file structure may differ from your training data.
 
 If you are unsure about a Next behavior, trust the checked-in config and the local docs shipped with the installed version:
+
 - `node_modules/next/dist/docs/index.md`
 <!-- END:nextjs-agent-rules -->
 
