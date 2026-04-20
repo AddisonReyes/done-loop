@@ -30,7 +30,14 @@ Open `http://localhost:3000`.
 - Lint: `npm run lint`
 - Typecheck: `npx tsc -p tsconfig.json --noEmit`
 - Build: `npm run build`
-- Start production server: `npm run start`
+- Preview production build (serves `out/` on `http://localhost:3000`): `npm run start`
+
+## Cloudflare Pages
+
+This project is configured for static hosting (no SSR runtime).
+
+- Build command: `npm run build`
+- Output directory: `out`
 
 ## Data Storage
 

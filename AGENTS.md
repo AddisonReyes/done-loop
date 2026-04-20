@@ -14,7 +14,7 @@ If you are unsure about a Next behavior, trust the checked-in config and the loc
 - Install: `npm install` (lockfile is `package-lock.json`)
 - Dev: `npm run dev`
 - Build: `npm run build`
-- Prod server: `npm run start`
+- Preview static build: `npm run start` (serves `out/` on port 3000)
 - Lint: `npm run lint` (runs `eslint` with flat config at `eslint.config.mjs`)
 - Typecheck (no script): `npx tsc -p tsconfig.json --noEmit`
 
