@@ -11,11 +11,11 @@ type HeroStatProps = {
 
 function HeroStat({ label, value }: HeroStatProps) {
   return (
-    <div className="flex aspect-square min-h-[92px] flex-col rounded-2xl border border-white/7 bg-white/[0.035] p-3 transition-colors hover:border-white/10 hover:bg-white/[0.045] sm:min-h-[104px] sm:p-4">
+    <div className="flex min-h-[104px] flex-col rounded-2xl border border-white/7 bg-white/[0.035] p-3 transition-colors hover:border-white/10 hover:bg-white/[0.045] sm:min-h-[104px] sm:p-4 lg:aspect-square">
       <div className="text-xs uppercase tracking-[0.16em] text-zinc-400">
         {label}
       </div>
-      <div className="mt-auto text-[1.45rem] font-semibold leading-none text-white sm:text-[1.75rem]">
+      <div className="mt-8 text-[1.45rem] font-semibold leading-none text-white sm:mt-10 sm:text-[1.75rem] lg:mt-auto">
         {value}
       </div>
     </div>
