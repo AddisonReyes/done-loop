@@ -34,7 +34,6 @@ export default function HabitsScreen() {
     monthLabel,
     pendingCount,
     setFilter,
-    todayKey,
     toggleTodayCompletion,
     totalCompletedToday,
     visibleHabits,
@@ -44,10 +43,7 @@ export default function HabitsScreen() {
 
   return (
     <View style={styles.screen}>
-      <ScreenScaffold
-        eyebrow={todayKey}
-        title={t('habits.title')}
-        description={t('habits.description')}>
+      <ScreenScaffold title={t('habits.title')}>
         <View style={styles.summary}>
           <View
             style={[

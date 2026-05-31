@@ -16,6 +16,7 @@ type ScreenScaffoldProps = PropsWithChildren<{
 export function ScreenScaffold({ title, eyebrow, description, children }: ScreenScaffoldProps) {
   const insets = useSafeAreaInsets();
   const theme = useTheme();
+  const hasSupportingText = !!eyebrow || !!description;
 
   return (
     <View style={[styles.root, { backgroundColor: theme.background }]}>
@@ -35,7 +36,7 @@ export function ScreenScaffold({ title, eyebrow, description, children }: Screen
           },
         ]}>
         <View style={styles.inner}>
-          <View style={styles.header}>
+          <View style={[styles.header, !hasSupportingText && styles.compactHeader]}>
             {eyebrow ? (
               <ThemedText type="smallBold" themeColor="accentStrong" style={styles.eyebrow}>
                 {eyebrow}
@@ -84,6 +85,9 @@ const styles = StyleSheet.create({
   },
   header: {
     gap: Spacing.two,
+  },
+  compactHeader: {
+    gap: 0,
   },
   eyebrow: {
     letterSpacing: 0.8,

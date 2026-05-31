@@ -46,10 +46,7 @@ export default function TodosScreen() {
 
   return (
     <View style={styles.screen}>
-      <ScreenScaffold
-        eyebrow={t('todos.eyebrow')}
-        title={t('todos.title')}
-        description={t('todos.description')}>
+      <ScreenScaffold title={t('todos.title')}>
         <SectionCard>
           <SegmentedControl
             value={todos.viewMode}

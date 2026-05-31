@@ -1,20 +1,20 @@
-import { SymbolView, SymbolViewProps } from 'expo-symbols';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Tabs, TabList, TabSlot, TabTrigger, TabTriggerSlotProps, TabListProps } from 'expo-router/ui';
+import type { ComponentProps } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Spacing } from '@/constants/theme';
-import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/i18n';
 
-type TabIconName = SymbolViewProps['name'];
+type TabIconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 
 const iconByRoute: Record<string, TabIconName> = {
-  habits: 'checkmark.circle',
-  todos: 'list.bullet',
+  habits: 'checkbox-marked-circle-outline',
+  todos: 'format-list-checks',
   calendar: 'calendar',
-  settings: 'gearshape',
+  settings: 'cog-outline',
 };
 
 export default function AppTabs() {
@@ -64,15 +64,11 @@ export function TabButton({
             borderColor: isFocused ? theme.borderStrong : 'transparent',
           },
         ]}>
-        <SymbolView
+        <MaterialCommunityIcons
           name={iconName}
-          tintColor={isFocused ? theme.accentStrong : theme.textSecondary}
           size={24}
-          weight="bold"
+          color={isFocused ? theme.accentStrong : theme.textSecondary}
         />
-        <ThemedText type="small" themeColor={isFocused ? 'accentStrong' : 'textMuted'} style={styles.label}>
-          {label}
-        </ThemedText>
       </View>
     </Pressable>
   );
@@ -118,7 +114,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: Spacing.one,
     justifyContent: 'space-around',
-    minHeight: 64,
+    minHeight: 56,
     paddingHorizontal: Spacing.one,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.12,
@@ -132,16 +128,11 @@ const styles = StyleSheet.create({
   },
   tabButtonView: {
     alignItems: 'center',
-    borderRadius: 16,
+    borderRadius: 15,
     borderWidth: 1,
-    gap: Spacing.half,
-    height: 54,
+    height: 46,
     justifyContent: 'center',
-    width: '100%',
-  },
-  label: {
-    fontSize: 11,
-    lineHeight: 14,
+    width: 58,
   },
   pressed: {
     opacity: 0.72,

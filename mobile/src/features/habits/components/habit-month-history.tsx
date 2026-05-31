@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
@@ -23,6 +24,9 @@ export function HabitMonthHistory({
 }: HabitMonthHistoryProps) {
   const theme = useTheme();
   const { t } = useTranslation();
+  const [gridWidth, setGridWidth] = useState(0);
+  const cellGap = Spacing.one;
+  const cellSize = gridWidth > 0 ? Math.floor((gridWidth - cellGap * 6) / 7) : 0;
 
   return (
     <View style={styles.container}>
@@ -48,7 +52,9 @@ export function HabitMonthHistory({
         </Pressable>
       </View>
 
-      <View style={styles.grid}>
+      <View
+        style={[styles.grid, { gap: cellGap }]}
+        onLayout={(event) => setGridWidth(event.nativeEvent.layout.width)}>
         {days.map((day) => {
           const backgroundColor =
             day.activity === 'complete'
@@ -69,6 +75,8 @@ export function HabitMonthHistory({
                 {
                   backgroundColor,
                   borderColor: day.activity === 'none' ? theme.border : theme.borderStrong,
+                  height: cellSize || undefined,
+                  width: cellSize || undefined,
                 },
               ]}>
               <ThemedText
@@ -125,10 +133,8 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.one,
   },
   day: {
-    width: 42,
     aspectRatio: 1,
     borderWidth: 1,
     borderRadius: 12,

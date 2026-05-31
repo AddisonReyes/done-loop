@@ -1,4 +1,4 @@
-import { SymbolView } from 'expo-symbols';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -25,16 +25,15 @@ export function FloatingCreateButton({ onPress }: FloatingCreateButtonProps) {
         {
           backgroundColor: theme.accent,
           borderColor: theme.borderStrong,
-          bottom: insets.bottom + 86,
+          bottom: insets.bottom + 76,
           shadowColor: theme.glow,
         },
         pressed && styles.pressed,
       ]}>
-      <SymbolView
+      <MaterialCommunityIcons
         name="plus"
-        tintColor="#FFFFFF"
-        size={30}
-        weight="bold"
+        size={28}
+        color="#FFFFFF"
       />
     </Pressable>
   );
@@ -43,16 +42,16 @@ export function FloatingCreateButton({ onPress }: FloatingCreateButtonProps) {
 const styles = StyleSheet.create({
   button: {
     alignItems: 'center',
-    borderRadius: 28,
+    borderRadius: 27,
     borderWidth: 1,
-    height: 56,
+    height: 54,
     justifyContent: 'center',
     position: 'absolute',
     right: Spacing.three,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
-    shadowRadius: 14,
-    width: 56,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.22,
+    shadowRadius: 18,
+    width: 54,
     zIndex: 20,
     elevation: 12,
   },

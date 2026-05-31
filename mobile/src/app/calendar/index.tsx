@@ -15,10 +15,7 @@ export default function CalendarScreen() {
   const todos = useTodos();
 
   return (
-    <ScreenScaffold
-      eyebrow={t('calendar.eyebrow')}
-      title={t('calendar.title')}
-      description={t('calendar.description')}>
+    <ScreenScaffold title={t('calendar.title')}>
       <View style={styles.section}>
         <ThemedText type="smallBold" themeColor="accentStrong">
           {t('calendar.habits')}

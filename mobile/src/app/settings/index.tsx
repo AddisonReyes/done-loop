@@ -11,6 +11,7 @@ import type {
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/i18n';
+import { DropdownSelect } from '@/shared/components/dropdown-select';
 import { ScreenScaffold } from '@/shared/components/screen-scaffold';
 import { SectionCard } from '@/shared/components/section-card';
 import { SegmentedControl } from '@/shared/components/segmented-control';
@@ -38,10 +39,7 @@ export default function SettingsScreen() {
   const { t } = useTranslation();
   const { isLoading, settings, setDateFormat, setLanguage, setNotificationsEnabled, setTheme } = useSettings();
   return (
-    <ScreenScaffold
-      eyebrow={t('settings.eyebrow')}
-      title={t('settings.title')}
-      description={t('settings.description')}>
+    <ScreenScaffold title={t('settings.title')}>
       {isLoading || !settings ? (
         <ThemedText type="small" themeColor="textSecondary">
           {t('settings.loading')}
@@ -88,7 +86,8 @@ export default function SettingsScreen() {
           </SectionCard>
 
           <SectionCard title={t('settings.dateFormat.section')}>
-            <SegmentedControl
+            <DropdownSelect
+              label={t('settings.dateFormat.section')}
               value={settings.dateFormat}
               onChange={(value) => void setDateFormat(value)}
               options={dateFormatOptions.map((option) => ({ value: option.value, label: t(option.labelKey) }))}
