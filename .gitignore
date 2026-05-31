@@ -12,6 +12,7 @@ node_modules/
 
 # testing
 /coverage
+coverage/
 
 # next.js
 .next/
@@ -19,10 +20,14 @@ node_modules/
 
 # production
 /build
+build/
+dist/
 
 # misc
 .DS_Store
 *.pem
+*.keystore
+!mobile/android/app/debug.keystore
 
 # debug
 npm-debug.log*
@@ -39,3 +44,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Expo / React Native local artifacts
+.expo/
+mobile/.expo/
+android/build/
+android/app/build/
+mobile/android/build/
+mobile/android/app/build/
+ios/build/
+mobile/ios/build/
+*.jks

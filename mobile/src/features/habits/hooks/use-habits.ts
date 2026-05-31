@@ -10,7 +10,7 @@ import {
   startOfMonth,
 } from '@/shared/utils/date';
 import { useTranslation } from '@/i18n';
-import { TextLimits } from '@/shared/constants/text-limits';
+import { normalizeHabitCreateDraft, normalizeHabitUpdateDraft } from '../services/habit-draft';
 
 export type HabitFilter = 'all' | 'pendingToday' | 'completedToday';
 
@@ -107,19 +107,12 @@ export function useHabits() {
 
   const createHabitFromDraft = useCallback(
     async (input: CreateHabitInput) => {
-      const name = input.name.trim().slice(0, TextLimits.title);
-      const description = input.description?.trim().slice(0, TextLimits.description);
-
-      if (!name) {
+      const draft = normalizeHabitCreateDraft(input);
+      if (!draft) {
         return;
       }
 
-      await HabitRepository.create({
-        ...input,
-        name,
-        description: description || undefined,
-        isActive: true,
-      });
+      await HabitRepository.create(draft);
       await loadHabits();
     },
     [loadHabits]
@@ -127,18 +120,12 @@ export function useHabits() {
 
   const updateHabitFromDraft = useCallback(
     async (habitId: string, input: UpdateHabitInput) => {
-      const name = input.name?.trim().slice(0, TextLimits.title);
-      const description = input.description?.trim().slice(0, TextLimits.description);
-
-      if (!name) {
+      const draft = normalizeHabitUpdateDraft(input);
+      if (!draft) {
         return;
       }
 
-      await HabitRepository.update(habitId, {
-        ...input,
-        name,
-        description: description || undefined,
-      });
+      await HabitRepository.update(habitId, draft);
       await loadHabits();
     },
     [loadHabits]

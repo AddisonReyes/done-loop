@@ -2,6 +2,7 @@ import * as Notifications from 'expo-notifications';
 
 import type { UserLanguagePreference } from '@/features/settings/types';
 import { translations } from '@/i18n/translations';
+import { parseReminderTime } from './reminder-time';
 
 type ScheduleHabitReminderInput = {
   habitId: string;
@@ -24,19 +25,6 @@ async function ensurePermissionsAsync(): Promise<boolean> {
 
   const requested = await Notifications.requestPermissionsAsync();
   return requested.granted;
-}
-
-function parseReminderTime(reminderTime?: string): { hour: number; minute: number } | null {
-  if (!reminderTime) {
-    return null;
-  }
-
-  const [hour, minute] = reminderTime.split(':').map(Number);
-  if (!Number.isInteger(hour) || !Number.isInteger(minute)) {
-    return null;
-  }
-
-  return { hour, minute };
 }
 
 export const NotificationService = {

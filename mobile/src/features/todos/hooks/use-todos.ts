@@ -6,8 +6,8 @@ import type { UserDateFormatPreference } from '@/features/settings/types';
 import { TodoRepository } from '@/features/todos/repositories';
 import type { CreateTodoInput, Todo, UpdateTodoInput } from '@/features/todos/types';
 import { useTranslation } from '@/i18n';
-import { TextLimits } from '@/shared/constants/text-limits';
 import { formatDateKey, isBeforeDateKey, isDateKey, toDateKey } from '@/shared/utils/date';
+import { normalizeTodoCreateDraft, normalizeTodoUpdateDraft } from '../services/todo-draft';
 
 type TodoSort = 'priority' | 'dueAt' | 'createdAt';
 type TodoViewMode = 'list' | 'calendar';
@@ -54,23 +54,19 @@ export function useTodos() {
 
   const createTodoFromDraft = useCallback(
     async (input: Omit<CreateTodoInput, 'notificationId'>) => {
-      const title = input.title.trim().slice(0, TextLimits.title);
-      const description = input.description?.trim().slice(0, TextLimits.description);
-
-      if (!title) {
+      const draft = normalizeTodoCreateDraft(input);
+      if (!draft) {
         return;
       }
 
       const notificationId = await NotificationService.scheduleTodoReminderAsync({
-        title,
-        dueAt: input.dueAt,
+        title: draft.title,
+        dueAt: draft.dueAt,
         language,
       });
 
       await TodoRepository.create({
-        ...input,
-        title,
-        description: description || undefined,
+        ...draft,
         notificationId,
       });
       await loadTodos();
@@ -80,18 +76,12 @@ export function useTodos() {
 
   const updateTodoFromDraft = useCallback(
     async (todo: Todo, input: UpdateTodoInput) => {
-      const title = input.title?.trim().slice(0, TextLimits.title);
-      const description = input.description?.trim().slice(0, TextLimits.description);
-
-      if (!title) {
+      const draft = normalizeTodoUpdateDraft(input);
+      if (!draft) {
         return;
       }
 
-      await TodoRepository.update(todo.id, {
-        ...input,
-        title,
-        description: description || undefined,
-      });
+      await TodoRepository.update(todo.id, draft);
       await loadTodos();
     },
     [loadTodos]
