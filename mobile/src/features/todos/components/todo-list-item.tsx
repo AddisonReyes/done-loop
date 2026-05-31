@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
@@ -8,18 +8,13 @@ import type { Todo } from '@/features/todos/types';
 
 type TodoListItemProps = {
   todo: Todo;
-  editing: boolean;
-  editingTitle: string;
   dateLabel: string;
-  onEditingTitleChange: (value: string) => void;
   onComplete: () => void;
   onReopen: () => void;
   onSoftDelete: () => void;
   onRestore: () => void;
   onPermanentDelete: () => void;
-  onStartEdit: () => void;
-  onSaveEdit: () => void;
-  onCancelEdit: () => void;
+  onStartEdit?: () => void;
 };
 
 const priorityLabelKeys = {
@@ -30,18 +25,13 @@ const priorityLabelKeys = {
 
 export function TodoListItem({
   todo,
-  editing,
-  editingTitle,
   dateLabel,
-  onEditingTitleChange,
   onComplete,
   onReopen,
   onSoftDelete,
   onRestore,
   onPermanentDelete,
   onStartEdit,
-  onSaveEdit,
-  onCancelEdit,
 }: TodoListItemProps) {
   const theme = useTheme();
   const { t } = useTranslation();
@@ -54,29 +44,13 @@ export function TodoListItem({
         styles.container,
         {
           borderColor: completed ? theme.borderStrong : theme.border,
-          backgroundColor: completed ? theme.accentSoft : theme.surfaceSoft,
-          shadowColor: theme.glow,
+          backgroundColor: completed ? theme.accentSoft : theme.backgroundElement,
         },
       ]}>
       <View style={styles.header}>
-        {editing ? (
-          <TextInput
-            accessibilityLabel={t('todos.editLabel')}
-            autoFocus
-            value={editingTitle}
-            onChangeText={onEditingTitleChange}
-            onSubmitEditing={onSaveEdit}
-            placeholderTextColor={theme.textSecondary}
-            style={[
-              styles.input,
-              { borderColor: theme.border, color: theme.text, backgroundColor: theme.surfaceStrong },
-            ]}
-          />
-        ) : (
-          <ThemedText type="smallBold" style={completed && styles.completedText}>
-            {todo.title}
-          </ThemedText>
-        )}
+        <ThemedText type="smallBold" style={completed && styles.completedText}>
+          {todo.title}
+        </ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
           {t(priorityLabelKeys[todo.priority])} • {dateLabel}
         </ThemedText>
@@ -88,18 +62,13 @@ export function TodoListItem({
             <Action label={t('todos.actions.restore')} onPress={onRestore} />
             <Action label={t('todos.actions.permanentDelete')} muted onPress={onPermanentDelete} />
           </>
-        ) : editing ? (
-          <>
-            <Action label={t('todos.actions.save')} onPress={onSaveEdit} />
-            <Action label={t('todos.actions.cancel')} muted onPress={onCancelEdit} />
-          </>
         ) : (
           <>
             <Action
               label={completed ? t('todos.actions.reopen') : t('todos.actions.complete')}
               onPress={completed ? onReopen : onComplete}
             />
-            <Action label={t('todos.actions.edit')} muted onPress={onStartEdit} />
+            {onStartEdit ? <Action label={t('todos.actions.edit')} muted onPress={onStartEdit} /> : null}
             <Action label={t('todos.actions.delete')} muted onPress={onSoftDelete} />
           </>
         )}
@@ -131,23 +100,12 @@ function Action({ label, muted, onPress }: { label: string; muted?: boolean; onP
 const styles = StyleSheet.create({
   container: {
     borderWidth: 1,
-    borderRadius: 20,
+    borderRadius: 18,
     padding: Spacing.three,
-    gap: Spacing.three,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.12,
-    shadowRadius: 20,
-    elevation: 2,
+    gap: Spacing.two,
   },
   header: {
     gap: Spacing.one,
-  },
-  input: {
-    minHeight: 44,
-    borderWidth: 1,
-    borderRadius: 14,
-    paddingHorizontal: Spacing.two,
-    fontSize: 16,
   },
   completedText: {
     textDecorationLine: 'line-through',
@@ -158,9 +116,9 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   action: {
-    minHeight: 36,
+    minHeight: 40,
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 14,
     justifyContent: 'center',
     paddingHorizontal: Spacing.three,
   },

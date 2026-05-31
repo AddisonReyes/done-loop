@@ -1,6 +1,6 @@
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useState } from 'react';
-import { Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
@@ -37,25 +37,6 @@ export function TimePickerField({ label, onChange, value }: TimePickerFieldProps
       onChange(dateToTime(date));
     }
   };
-
-  if (Platform.OS === 'web') {
-    return (
-      <View style={styles.container}>
-        <ThemedText type="smallBold">{label}</ThemedText>
-        <TextInput
-          accessibilityLabel={label}
-          value={value ?? ''}
-          onChangeText={(nextValue) => onChange(nextValue.trim() || undefined)}
-          placeholder="09:00"
-          placeholderTextColor={theme.textSecondary}
-          style={[
-            styles.input,
-            { backgroundColor: theme.surfaceStrong, borderColor: theme.border, color: theme.text },
-          ]}
-        />
-      </View>
-    );
-  }
 
   return (
     <View style={styles.container}>
@@ -104,12 +85,5 @@ const styles = StyleSheet.create({
   clearButton: {
     justifyContent: 'center',
     minHeight: 48,
-  },
-  input: {
-    borderRadius: 14,
-    borderWidth: 1,
-    fontSize: 16,
-    minHeight: 48,
-    paddingHorizontal: Spacing.three,
   },
 });

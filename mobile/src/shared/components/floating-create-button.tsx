@@ -1,5 +1,5 @@
 import { SymbolView } from 'expo-symbols';
-import { Platform, Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Spacing } from '@/constants/theme';
@@ -25,13 +25,13 @@ export function FloatingCreateButton({ onPress }: FloatingCreateButtonProps) {
         {
           backgroundColor: theme.accent,
           borderColor: theme.borderStrong,
-          bottom: insets.bottom + 96,
+          bottom: insets.bottom + 86,
           shadowColor: theme.glow,
         },
         pressed && styles.pressed,
       ]}>
       <SymbolView
-        name={{ ios: 'plus', android: 'add', web: 'add' }}
+        name="plus"
         tintColor="#FFFFFF"
         size={30}
         weight="bold"
@@ -43,16 +43,16 @@ export function FloatingCreateButton({ onPress }: FloatingCreateButtonProps) {
 const styles = StyleSheet.create({
   button: {
     alignItems: 'center',
-    borderRadius: 32,
+    borderRadius: 28,
     borderWidth: 1,
-    height: 64,
+    height: 56,
     justifyContent: 'center',
-    position: Platform.select({ web: 'fixed', default: 'absolute' }) as 'absolute',
+    position: 'absolute',
     right: Spacing.three,
-    shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 0.26,
-    shadowRadius: 28,
-    width: 64,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 14,
+    width: 56,
     zIndex: 20,
     elevation: 12,
   },

@@ -2,17 +2,17 @@ import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { HabitMonthHistory } from '@/features/habits/components/habit-month-history';
-import { useHabitsMvp } from '@/features/habits/hooks/use-habits-mvp';
+import { useHabits } from '@/features/habits/hooks/use-habits';
 import { TodoListItem } from '@/features/todos/components/todo-list-item';
-import { useTodosMvp } from '@/features/todos/hooks/use-todos-mvp';
+import { useTodos } from '@/features/todos/hooks/use-todos';
 import { Spacing } from '@/constants/theme';
 import { useTranslation } from '@/i18n';
 import { ScreenScaffold } from '@/shared/components/screen-scaffold';
 
 export default function CalendarScreen() {
   const { t } = useTranslation();
-  const habits = useHabitsMvp();
-  const todos = useTodosMvp();
+  const habits = useHabits();
+  const todos = useTodos();
 
   return (
     <ScreenScaffold
@@ -49,18 +49,12 @@ export default function CalendarScreen() {
                 <TodoListItem
                   key={todo.id}
                   todo={todo}
-                  editing={false}
-                  editingTitle=""
                   dateLabel={todos.getTodoDateLabel(todo)}
-                  onEditingTitleChange={() => {}}
                   onComplete={() => void todos.completeTodo(todo)}
                   onReopen={() => void todos.reopenTodo(todo)}
                   onSoftDelete={() => void todos.softDeleteTodo(todo)}
                   onRestore={() => void todos.restoreTodo(todo)}
                   onPermanentDelete={() => void todos.permanentlyDeleteTodo(todo)}
-                  onStartEdit={() => {}}
-                  onSaveEdit={() => {}}
-                  onCancelEdit={() => {}}
                 />
               ))}
             </View>

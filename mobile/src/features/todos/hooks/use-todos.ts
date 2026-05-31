@@ -4,7 +4,7 @@ import { NotificationService } from '@/features/notifications/services/notificat
 import { SettingsRepository } from '@/features/settings/repositories/settings-repository';
 import type { UserDateFormatPreference } from '@/features/settings/types';
 import { TodoRepository } from '@/features/todos/repositories';
-import type { CreateTodoInput, Todo, TodoPriority, UpdateTodoInput } from '@/features/todos/types';
+import type { CreateTodoInput, Todo, UpdateTodoInput } from '@/features/todos/types';
 import { useTranslation } from '@/i18n';
 import { formatDateKey, isBeforeDateKey, isDateKey, toDateKey } from '@/shared/utils/date';
 
@@ -13,26 +13,17 @@ type TodoViewMode = 'list' | 'calendar';
 
 const oneMonthMs = 30 * 24 * 60 * 60 * 1000;
 
-export function useTodosMvp() {
+export function useTodos() {
   const { language, locale, t } = useTranslation();
   const [todos, setTodos] = useState<Todo[]>([]);
   const [status, setStatus] = useState<'loading' | 'idle' | 'error'>('loading');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [title, setTitle] = useState('');
-  const [priority, setPriority] = useState<TodoPriority>(2);
-  const [dueDate, setDueDate] = useState('');
   const [sort, setSort] = useState<TodoSort>('priority');
   const [viewMode, setViewMode] = useState<TodoViewMode>('list');
   const [showDeleted, setShowDeleted] = useState(false);
-  const [editingTodoId, setEditingTodoId] = useState<string | null>(null);
-  const [editingTitle, setEditingTitle] = useState('');
   const [dateFormat, setDateFormat] = useState<UserDateFormatPreference>('iso');
 
   const todayKey = useMemo(() => toDateKey(new Date()), []);
-  const normalizedDueDate = useMemo(() => {
-    const value = dueDate.trim();
-    return isDateKey(value) ? value : undefined;
-  }, [dueDate]);
 
   const loadTodos = useCallback(async () => {
     try {
@@ -64,30 +55,6 @@ export function useTodosMvp() {
     return () => clearTimeout(timeout);
   }, []);
 
-  const createTodo = useCallback(async () => {
-    const cleanTitle = title.trim();
-    if (!cleanTitle) {
-      return;
-    }
-
-    const notificationId = await NotificationService.scheduleTodoReminderAsync({
-      title: cleanTitle,
-      dueAt: normalizedDueDate,
-      language,
-    });
-
-    await TodoRepository.create({
-      title: cleanTitle,
-      priority,
-      dueAt: normalizedDueDate,
-      notificationId,
-    });
-    setTitle('');
-    setDueDate('');
-    setPriority(2);
-    await loadTodos();
-  }, [language, loadTodos, normalizedDueDate, priority, title]);
-
   const createTodoFromDraft = useCallback(
     async (input: Omit<CreateTodoInput, 'notificationId'>) => {
       if (!input.title.trim()) {
@@ -109,26 +76,6 @@ export function useTodosMvp() {
     },
     [language, loadTodos]
   );
-
-  const startEditing = useCallback((todo: Todo) => {
-    setEditingTodoId(todo.id);
-    setEditingTitle(todo.title);
-  }, []);
-
-  const cancelEditing = useCallback(() => {
-    setEditingTodoId(null);
-    setEditingTitle('');
-  }, []);
-
-  const saveEditing = useCallback(async () => {
-    if (!editingTodoId || !editingTitle.trim()) {
-      return;
-    }
-
-    await TodoRepository.update(editingTodoId, { title: editingTitle.trim() });
-    cancelEditing();
-    await loadTodos();
-  }, [cancelEditing, editingTitle, editingTodoId, loadTodos]);
 
   const updateTodoFromDraft = useCallback(
     async (todo: Todo, input: UpdateTodoInput) => {
@@ -254,35 +201,22 @@ export function useTodosMvp() {
   return {
     calendarGroups,
     completeTodo,
-    createTodo,
     createTodoFromDraft,
     deletedTodos,
-    dueDate,
     dateFormat,
-    editingTitle,
-    editingTodoId,
     errorMessage,
     getTodoDateLabel,
     isLoading: status === 'loading',
     permanentlyDeleteTodo,
-    priority,
     reopenTodo,
     restoreTodo,
-    saveEditing,
-    setDueDate,
-    setEditingTitle,
-    setPriority,
     setShowDeleted,
     setSort,
-    setTitle,
     setViewMode,
     showDeleted,
     softDeleteTodo,
     sort,
     sortedTodos,
-    startEditing,
-    cancelEditing,
-    title,
     updateTodoFromDraft,
     viewMode,
   };

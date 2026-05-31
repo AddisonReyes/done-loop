@@ -1,5 +1,4 @@
 import * as Notifications from 'expo-notifications';
-import { Platform } from 'react-native';
 
 import type { UserLanguagePreference } from '@/features/settings/types';
 import { translations } from '@/i18n/translations';
@@ -18,10 +17,6 @@ type ScheduleTodoReminderInput = {
 };
 
 async function ensurePermissionsAsync(): Promise<boolean> {
-  if (Platform.OS === 'web') {
-    return false;
-  }
-
   const existing = await Notifications.getPermissionsAsync();
   if (existing.granted) {
     return true;
@@ -99,7 +94,7 @@ export const NotificationService = {
   },
 
   async cancelAsync(notificationId?: string): Promise<void> {
-    if (!notificationId || Platform.OS === 'web') {
+    if (!notificationId) {
       return;
     }
 

@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
@@ -10,26 +10,16 @@ import type { Habit } from '../types';
 type HabitListItemProps = {
   habit: Habit;
   completedToday: boolean;
-  editing: boolean;
-  editingName: string;
-  onEditingNameChange: (value: string) => void;
   onToggleToday: () => void;
   onStartEdit: () => void;
-  onSaveEdit: () => void;
-  onCancelEdit: () => void;
   onDeactivate: () => void;
 };
 
 export function HabitListItem({
   habit,
   completedToday,
-  editing,
-  editingName,
-  onEditingNameChange,
   onToggleToday,
   onStartEdit,
-  onSaveEdit,
-  onCancelEdit,
   onDeactivate,
 }: HabitListItemProps) {
   const theme = useTheme();
@@ -41,8 +31,7 @@ export function HabitListItem({
         styles.container,
         {
           borderColor: completedToday ? theme.borderStrong : theme.border,
-          backgroundColor: completedToday ? theme.accentSoft : theme.surfaceSoft,
-          shadowColor: theme.glow,
+          backgroundColor: completedToday ? theme.accentSoft : theme.backgroundElement,
         },
       ]}>
       <Pressable
@@ -62,47 +51,16 @@ export function HabitListItem({
       </Pressable>
 
       <View style={styles.body}>
-        {editing ? (
-          <TextInput
-            accessibilityLabel={t('habits.editLabel')}
-            value={editingName}
-            onChangeText={onEditingNameChange}
-            autoFocus
-            returnKeyType="done"
-            onSubmitEditing={onSaveEdit}
-            style={[
-              styles.input,
-              {
-                borderColor: theme.border,
-                color: theme.text,
-                backgroundColor: theme.surfaceStrong,
-              },
-            ]}
-            placeholderTextColor={theme.textSecondary}
-          />
-        ) : (
-          <>
-            <ThemedText type="smallBold" style={completedToday && styles.completedTitle}>
-              {habit.name}
-            </ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">
-              {completedToday ? t('habits.completedToday') : t('habits.pendingToday')}
-            </ThemedText>
-          </>
-        )}
+        <ThemedText type="smallBold" style={completedToday && styles.completedTitle}>
+          {habit.name}
+        </ThemedText>
+        <ThemedText type="small" themeColor="textSecondary">
+          {completedToday ? t('habits.completedToday') : t('habits.pendingToday')}
+        </ThemedText>
 
         <View style={styles.actions}>
-          {editing ? (
-            <>
-              <ActionButton label={t('habits.save')} onPress={onSaveEdit} />
-              <ActionButton label={t('habits.cancel')} onPress={onCancelEdit} muted />
-            </>
-          ) : (
-            <>
-              <ActionButton label={t('habits.edit')} onPress={onStartEdit} />
-              <ActionButton label={t('habits.deactivate')} onPress={onDeactivate} muted />
-            </>
-          )}
+          <ActionButton label={t('habits.edit')} onPress={onStartEdit} />
+          <ActionButton label={t('habits.deactivate')} onPress={onDeactivate} muted />
         </View>
       </View>
     </View>
@@ -138,14 +96,10 @@ function ActionButton({ label, muted, onPress }: ActionButtonProps) {
 const styles = StyleSheet.create({
   container: {
     borderWidth: 1,
-    borderRadius: 20,
+    borderRadius: 18,
     padding: Spacing.three,
     flexDirection: 'row',
     gap: Spacing.three,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.12,
-    shadowRadius: 20,
-    elevation: 2,
   },
   check: {
     width: 44,
@@ -165,22 +119,15 @@ const styles = StyleSheet.create({
   completedTitle: {
     textDecorationLine: 'line-through',
   },
-  input: {
-    minHeight: 44,
-    borderWidth: 1,
-    borderRadius: 14,
-    paddingHorizontal: Spacing.two,
-    fontSize: 16,
-  },
   actions: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.two,
   },
   actionButton: {
-    minHeight: 36,
+    minHeight: 40,
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 14,
     justifyContent: 'center',
     paddingHorizontal: Spacing.three,
   },

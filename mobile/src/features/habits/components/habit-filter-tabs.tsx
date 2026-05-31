@@ -5,7 +5,7 @@ import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/i18n';
 
-import type { HabitFilter } from '../hooks/use-habits-mvp';
+import type { HabitFilter } from '../hooks/use-habits';
 
 type HabitFilterTabsProps = {
   value: HabitFilter;

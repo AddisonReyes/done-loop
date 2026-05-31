@@ -1,17 +1,16 @@
 import { PropsWithChildren } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { BottomTabInset, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 type ScreenScaffoldProps = PropsWithChildren<{
   title: string;
   eyebrow?: string;
-  description: string;
+  description?: string;
 }>;
 
 export function ScreenScaffold({ title, eyebrow, description, children }: ScreenScaffoldProps) {
@@ -21,15 +20,8 @@ export function ScreenScaffold({ title, eyebrow, description, children }: Screen
   return (
     <View style={[styles.root, { backgroundColor: theme.background }]}>
       <LinearGradient
-        colors={[theme.washTop, theme.washMid, 'rgba(8, 8, 10, 0)']}
-        locations={[0, 0.46, 1]}
+        colors={[theme.washTop, theme.washMid, theme.background]}
         style={styles.topWash}
-      />
-      <LinearGradient
-        colors={[theme.sheenStart, theme.sheenEnd, 'rgba(8, 8, 10, 0)']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.softSheen}
       />
       <ScrollView
         style={styles.scrollView}
@@ -52,20 +44,14 @@ export function ScreenScaffold({ title, eyebrow, description, children }: Screen
             <ThemedText type="title" style={styles.title}>
               {title}
             </ThemedText>
-            <ThemedText themeColor="textSecondary" style={styles.description}>
-              {description}
-            </ThemedText>
+            {description ? (
+              <ThemedText themeColor="textSecondary" style={styles.description}>
+                {description}
+              </ThemedText>
+            ) : null}
           </View>
 
-          <ThemedView
-            type="backgroundElement"
-            style={[styles.card, { borderColor: theme.border, shadowColor: theme.glow }]}>
-            <LinearGradient
-              colors={[theme.sheenStart, theme.sheenEnd]}
-              style={styles.cardSheen}
-            />
-            {children}
-          </ThemedView>
+          <View style={styles.contentStack}>{children}</View>
         </View>
       </ScrollView>
     </View>
@@ -82,16 +68,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: 360,
-    pointerEvents: 'none',
-  },
-  softSheen: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '100%',
-    opacity: 0.88,
+    height: 180,
     pointerEvents: 'none',
   },
   scrollView: {
@@ -103,8 +80,7 @@ const styles = StyleSheet.create({
   },
   inner: {
     width: '100%',
-    maxWidth: MaxContentWidth,
-    gap: Spacing.four,
+    gap: Spacing.three,
   },
   header: {
     gap: Spacing.two,
@@ -114,29 +90,13 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   title: {
-    fontSize: 36,
-    lineHeight: 42,
+    fontSize: 30,
+    lineHeight: 36,
   },
   description: {
     maxWidth: 420,
   },
-  card: {
-    borderWidth: 1,
-    borderRadius: 24,
-    padding: Spacing.three,
+  contentStack: {
     gap: Spacing.three,
-    overflow: 'hidden',
-    shadowOffset: { width: 0, height: 18 },
-    shadowOpacity: 0.22,
-    shadowRadius: 34,
-    elevation: 8,
-  },
-  cardSheen: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 120,
-    pointerEvents: 'none',
   },
 });

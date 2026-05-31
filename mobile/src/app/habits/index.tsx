@@ -6,12 +6,14 @@ import { HabitEditorModal } from '@/features/habits/components/habit-editor-moda
 import { HabitFilterTabs } from '@/features/habits/components/habit-filter-tabs';
 import { HabitListItem } from '@/features/habits/components/habit-list-item';
 import { HabitMonthHistory } from '@/features/habits/components/habit-month-history';
-import { useHabitsMvp } from '@/features/habits/hooks/use-habits-mvp';
+import { useHabits } from '@/features/habits/hooks/use-habits';
 import type { Habit } from '@/features/habits/types';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/i18n';
 import { FloatingCreateButton } from '@/shared/components/floating-create-button';
+import { EmptyState } from '@/shared/components/empty-state';
+import { SectionCard } from '@/shared/components/section-card';
 import { ScreenScaffold } from '@/shared/components/screen-scaffold';
 
 export default function HabitsScreen() {
@@ -38,7 +40,7 @@ export default function HabitsScreen() {
     visibleHabits,
     habits,
     updateHabitFromDraft,
-  } = useHabitsMvp();
+  } = useHabits();
 
   return (
     <View style={styles.screen}>
@@ -73,14 +75,18 @@ export default function HabitsScreen() {
           </View>
         </View>
 
-        <HabitFilterTabs value={filter} onChange={setFilter} />
+        <SectionCard>
+          <HabitFilterTabs value={filter} onChange={setFilter} />
+        </SectionCard>
 
-        <HabitMonthHistory
-          monthLabel={monthLabel}
-          days={monthHistoryDays}
-          onPreviousMonth={goToPreviousMonth}
-          onNextMonth={goToNextMonth}
-        />
+        <SectionCard title={t('calendar.habits')}>
+          <HabitMonthHistory
+            monthLabel={monthLabel}
+            days={monthHistoryDays}
+            onPreviousMonth={goToPreviousMonth}
+            onNextMonth={goToNextMonth}
+          />
+        </SectionCard>
 
         {errorMessage ? (
           <ThemedText type="small" themeColor="warning">
@@ -95,15 +101,15 @@ export default function HabitsScreen() {
         ) : null}
 
         {!isLoading && habits.length === 0 ? (
-          <ThemedText type="small" themeColor="textSecondary">
-            {t('habits.empty')}
-          </ThemedText>
+          <EmptyState
+            message={t('habits.empty')}
+            actionLabel={t('habits.create')}
+            onAction={() => setIsCreateModalVisible(true)}
+          />
         ) : null}
 
         {!isLoading && habits.length > 0 && visibleHabits.length === 0 ? (
-          <ThemedText type="small" themeColor="textSecondary">
-            {t('habits.emptyFilter')}
-          </ThemedText>
+          <EmptyState message={t('habits.emptyFilter')} />
         ) : null}
 
         <View style={styles.list}>
@@ -112,15 +118,10 @@ export default function HabitsScreen() {
               key={habit.id}
               habit={habit}
               completedToday={completedHabitIds.has(habit.id)}
-              editing={false}
-              editingName=""
-              onEditingNameChange={() => {}}
               onToggleToday={() => {
                 void toggleTodayCompletion(habit.id);
               }}
               onStartEdit={() => setEditingHabit(habit)}
-              onSaveEdit={() => {}}
-              onCancelEdit={() => {}}
               onDeactivate={() => {
                 void deactivateHabit(habit.id);
               }}

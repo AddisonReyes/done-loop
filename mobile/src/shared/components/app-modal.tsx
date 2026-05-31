@@ -1,5 +1,6 @@
 import { PropsWithChildren } from 'react';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
@@ -13,10 +14,13 @@ type AppModalProps = PropsWithChildren<{
 
 export function AppModal({ children, onClose, title, visible }: AppModalProps) {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
 
   return (
     <Modal animationType="fade" transparent visible={visible} onRequestClose={onClose}>
-      <View style={styles.root}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.root}>
         <Pressable accessibilityRole="button" style={styles.backdrop} onPress={onClose} />
         <View
           style={[
@@ -24,6 +28,7 @@ export function AppModal({ children, onClose, title, visible }: AppModalProps) {
             {
               backgroundColor: theme.backgroundElement,
               borderColor: theme.border,
+              paddingBottom: insets.bottom + Spacing.three,
               shadowColor: theme.glow,
             },
           ]}>
@@ -37,7 +42,7 @@ export function AppModal({ children, onClose, title, visible }: AppModalProps) {
           </View>
           {children}
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -48,7 +53,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   backdrop: {
-    ...StyleSheet.absoluteFill,
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.52)',
   },
   sheet: {

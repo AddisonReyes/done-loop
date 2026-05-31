@@ -6,14 +6,17 @@ import { SettingsRepository } from '@/features/settings/repositories/settings-re
 import type { UserDateFormatPreference } from '@/features/settings/types';
 import { TodoEditorModal } from '@/features/todos/components/todo-editor-modal';
 import { TodoListItem } from '@/features/todos/components/todo-list-item';
-import { useTodosMvp } from '@/features/todos/hooks/use-todos-mvp';
-import type { TodoSort, TodoViewMode } from '@/features/todos/hooks/use-todos-mvp';
+import { useTodos } from '@/features/todos/hooks/use-todos';
+import type { TodoSort, TodoViewMode } from '@/features/todos/hooks/use-todos';
 import type { Todo } from '@/features/todos/types';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/i18n';
 import { FloatingCreateButton } from '@/shared/components/floating-create-button';
+import { EmptyState } from '@/shared/components/empty-state';
 import { ScreenScaffold } from '@/shared/components/screen-scaffold';
+import { SectionCard } from '@/shared/components/section-card';
+import { SegmentedControl } from '@/shared/components/segmented-control';
 
 const sorts: { value: TodoSort; labelKey: string }[] = [
   { value: 'priority', labelKey: 'todos.sorts.priority' },
@@ -32,7 +35,7 @@ export default function TodosScreen() {
   const [dateFormat, setDateFormat] = useState<UserDateFormatPreference>('iso');
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
-  const todos = useTodosMvp();
+  const todos = useTodos();
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -47,43 +50,33 @@ export default function TodosScreen() {
         eyebrow={t('todos.eyebrow')}
         title={t('todos.title')}
         description={t('todos.description')}>
-        <View style={styles.segmentRow}>
-          {modes.map((mode) => (
-            <Segment
-              key={mode.value}
-              label={t(mode.labelKey)}
-              selected={todos.viewMode === mode.value}
-              onPress={() => todos.setViewMode(mode.value)}
-            />
-          ))}
-        </View>
-
-        <View style={styles.segmentRow}>
-          {sorts.map((sort) => (
-            <Segment
-              key={sort.value}
-              label={t(sort.labelKey)}
-              selected={todos.sort === sort.value}
-              onPress={() => todos.setSort(sort.value)}
-            />
-          ))}
-        </View>
-
-        <Pressable
-          accessibilityRole="switch"
-          accessibilityState={{ checked: todos.showDeleted }}
-          onPress={() => todos.setShowDeleted(!todos.showDeleted)}
-          style={[
-            styles.deletedToggle,
-            {
-              backgroundColor: todos.showDeleted ? theme.accentSoft : theme.backgroundSelected,
-              borderColor: todos.showDeleted ? theme.borderStrong : theme.border,
-            },
-          ]}>
-          <ThemedText type="smallBold" themeColor={todos.showDeleted ? 'accentStrong' : 'textSecondary'}>
-            {todos.showDeleted ? t('todos.deletedToggleActive') : t('todos.deletedToggle')}
-          </ThemedText>
-        </Pressable>
+        <SectionCard>
+          <SegmentedControl
+            value={todos.viewMode}
+            onChange={todos.setViewMode}
+            options={modes.map((mode) => ({ value: mode.value, label: t(mode.labelKey) }))}
+          />
+          <SegmentedControl
+            value={todos.sort}
+            onChange={todos.setSort}
+            options={sorts.map((sort) => ({ value: sort.value, label: t(sort.labelKey) }))}
+          />
+          <Pressable
+            accessibilityRole="switch"
+            accessibilityState={{ checked: todos.showDeleted }}
+            onPress={() => todos.setShowDeleted(!todos.showDeleted)}
+            style={[
+              styles.deletedToggle,
+              {
+                backgroundColor: todos.showDeleted ? theme.accentSoft : theme.backgroundSelected,
+                borderColor: todos.showDeleted ? theme.borderStrong : theme.border,
+              },
+            ]}>
+            <ThemedText type="smallBold" themeColor={todos.showDeleted ? 'accentStrong' : 'textSecondary'}>
+              {todos.showDeleted ? t('todos.deletedToggleActive') : t('todos.deletedToggle')}
+            </ThemedText>
+          </Pressable>
+        </SectionCard>
 
         {todos.errorMessage ? (
           <ThemedText type="small" themeColor="warning">
@@ -108,18 +101,13 @@ export default function TodosScreen() {
                   <TodoListItem
                     key={todo.id}
                     todo={todo}
-                    editing={false}
-                    editingTitle=""
                     dateLabel={todos.getTodoDateLabel(todo)}
-                    onEditingTitleChange={() => {}}
                     onComplete={() => void todos.completeTodo(todo)}
                     onReopen={() => void todos.reopenTodo(todo)}
                     onSoftDelete={() => void todos.softDeleteTodo(todo)}
                     onRestore={() => void todos.restoreTodo(todo)}
                     onPermanentDelete={() => void todos.permanentlyDeleteTodo(todo)}
                     onStartEdit={() => setEditingTodo(todo)}
-                    onSaveEdit={() => {}}
-                    onCancelEdit={() => {}}
                   />
                 ))}
               </View>
@@ -131,27 +119,24 @@ export default function TodosScreen() {
               <TodoListItem
                 key={todo.id}
                 todo={todo}
-                editing={false}
-                editingTitle=""
                 dateLabel={todos.getTodoDateLabel(todo)}
-                onEditingTitleChange={() => {}}
                 onComplete={() => void todos.completeTodo(todo)}
                 onReopen={() => void todos.reopenTodo(todo)}
                 onSoftDelete={() => void todos.softDeleteTodo(todo)}
                 onRestore={() => void todos.restoreTodo(todo)}
                 onPermanentDelete={() => void todos.permanentlyDeleteTodo(todo)}
                 onStartEdit={() => setEditingTodo(todo)}
-                onSaveEdit={() => {}}
-                onCancelEdit={() => {}}
               />
             ))}
           </View>
         )}
 
         {!todos.isLoading && todos.sortedTodos.length === 0 ? (
-          <ThemedText type="small" themeColor="textSecondary">
-            {todos.showDeleted ? t('todos.emptyDeleted') : t('todos.empty')}
-          </ThemedText>
+          <EmptyState
+            message={todos.showDeleted ? t('todos.emptyDeleted') : t('todos.empty')}
+            actionLabel={todos.showDeleted ? undefined : t('todos.form.create')}
+            onAction={todos.showDeleted ? undefined : () => setIsCreateModalVisible(true)}
+          />
         ) : null}
       </ScreenScaffold>
       <TodoEditorModal
@@ -180,42 +165,9 @@ export default function TodosScreen() {
   );
 }
 
-function Segment({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
-  const theme = useTheme();
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityState={{ selected }}
-      onPress={onPress}
-      style={[
-        styles.segment,
-        {
-          backgroundColor: selected ? theme.accentSoft : theme.backgroundSelected,
-          borderColor: selected ? theme.borderStrong : theme.border,
-        },
-      ]}>
-      <ThemedText type="smallBold" themeColor={selected ? 'accentStrong' : 'textSecondary'}>
-        {label}
-      </ThemedText>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-  },
-  segmentRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.two,
-  },
-  segment: {
-    minHeight: 40,
-    borderWidth: 1,
-    borderRadius: 14,
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.three,
   },
   deletedToggle: {
     minHeight: 44,

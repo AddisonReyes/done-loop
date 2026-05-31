@@ -3,17 +3,18 @@ import { Tabs, TabList, TabSlot, TabTrigger, TabTriggerSlotProps, TabListProps }
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
+import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/i18n';
 
 type TabIconName = SymbolViewProps['name'];
 
 const iconByRoute: Record<string, TabIconName> = {
-  habits: { ios: 'checkmark.circle', android: 'check_circle', web: 'check_circle' },
-  todos: { ios: 'list.bullet', android: 'format_list_bulleted', web: 'format_list_bulleted' },
-  calendar: { ios: 'calendar', android: 'calendar_month', web: 'calendar_month' },
-  settings: { ios: 'gearshape', android: 'settings', web: 'settings' },
+  habits: 'checkmark.circle',
+  todos: 'list.bullet',
+  calendar: 'calendar',
+  settings: 'gearshape',
 };
 
 export default function AppTabs() {
@@ -25,16 +26,16 @@ export default function AppTabs() {
       <TabList asChild>
         <CustomTabList>
           <TabTrigger name="habits" href="/habits" asChild>
-            <TabButton accessibilityLabel={t('tabs.habits')} iconName={iconByRoute.habits} />
+            <TabButton label={t('tabs.habits')} iconName={iconByRoute.habits} />
           </TabTrigger>
           <TabTrigger name="todos" href="/todos" asChild>
-            <TabButton accessibilityLabel={t('tabs.todos')} iconName={iconByRoute.todos} />
+            <TabButton label={t('tabs.todos')} iconName={iconByRoute.todos} />
           </TabTrigger>
           <TabTrigger name="calendar" href="/calendar" asChild>
-            <TabButton accessibilityLabel={t('tabs.calendar')} iconName={iconByRoute.calendar} />
+            <TabButton label={t('tabs.calendar')} iconName={iconByRoute.calendar} />
           </TabTrigger>
           <TabTrigger name="settings" href="/settings" asChild>
-            <TabButton accessibilityLabel={t('tabs.settings')} iconName={iconByRoute.settings} />
+            <TabButton label={t('tabs.settings')} iconName={iconByRoute.settings} />
           </TabTrigger>
         </CustomTabList>
       </TabList>
@@ -43,17 +44,17 @@ export default function AppTabs() {
 }
 
 export function TabButton({
-  accessibilityLabel,
+  label,
   iconName,
   isFocused,
   ...props
-}: TabTriggerSlotProps & { accessibilityLabel: string; iconName: TabIconName }) {
+}: TabTriggerSlotProps & { label: string; iconName: TabIconName }) {
   const theme = useTheme();
 
   return (
     <Pressable
       {...props}
-      accessibilityLabel={accessibilityLabel}
+      accessibilityLabel={label}
       style={({ pressed }) => [styles.tabButton, pressed && styles.pressed]}>
       <View
         style={[
@@ -69,6 +70,9 @@ export function TabButton({
           size={24}
           weight="bold"
         />
+        <ThemedText type="small" themeColor={isFocused ? 'accentStrong' : 'textMuted'} style={styles.label}>
+          {label}
+        </ThemedText>
       </View>
     </Pressable>
   );
@@ -103,23 +107,22 @@ const styles = StyleSheet.create({
     bottom: 0,
     flexDirection: 'row',
     justifyContent: 'center',
-    paddingHorizontal: Spacing.three,
+    paddingHorizontal: Spacing.two,
     position: 'absolute',
     width: '100%',
   },
   innerContainer: {
     alignItems: 'center',
-    borderRadius: 30,
+    borderRadius: 22,
     borderWidth: 1,
     flexDirection: 'row',
-    gap: Spacing.two,
+    gap: Spacing.one,
     justifyContent: 'space-around',
-    maxWidth: MaxContentWidth,
-    minHeight: 70,
-    paddingHorizontal: Spacing.two,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.22,
-    shadowRadius: 28,
+    minHeight: 64,
+    paddingHorizontal: Spacing.one,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
     width: '100%',
   },
   tabButton: {
@@ -129,11 +132,16 @@ const styles = StyleSheet.create({
   },
   tabButtonView: {
     alignItems: 'center',
-    borderRadius: 18,
+    borderRadius: 16,
     borderWidth: 1,
-    height: 48,
+    gap: Spacing.half,
+    height: 54,
     justifyContent: 'center',
-    width: 48,
+    width: '100%',
+  },
+  label: {
+    fontSize: 11,
+    lineHeight: 14,
   },
   pressed: {
     opacity: 0.72,

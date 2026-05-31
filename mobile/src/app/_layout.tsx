@@ -1,4 +1,4 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
+import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Animated, StyleSheet } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
@@ -36,7 +36,7 @@ function ThemedNavigation() {
 
 const styles = StyleSheet.create({
   transitionOverlay: {
-    ...StyleSheet.absoluteFill,
+    ...StyleSheet.absoluteFillObject,
     zIndex: 100,
   },
 });

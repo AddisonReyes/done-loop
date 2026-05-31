@@ -1,15 +1,13 @@
-import '@/global.css';
-
 import { Platform } from 'react-native';
 
 export const Colors = {
   light: {
     text: '#18181B',
-    background: '#FAFAFF',
-    backgroundElement: 'rgba(255, 255, 255, 0.88)',
-    backgroundSelected: 'rgba(245, 243, 255, 0.92)',
-    border: 'rgba(88, 28, 135, 0.12)',
-    borderStrong: 'rgba(147, 51, 234, 0.26)',
+    background: '#F7F7FB',
+    backgroundElement: '#FFFFFF',
+    backgroundSelected: '#F0EEF8',
+    border: '#E4E4EA',
+    borderStrong: '#D7C8F7',
     accent: '#8B5CF6',
     accentSoft: 'rgba(139, 92, 246, 0.14)',
     accentStrong: '#6D28D9',
@@ -18,24 +16,24 @@ export const Colors = {
     danger: '#E11D48',
     textSecondary: '#52525B',
     textMuted: '#71717A',
-    surfaceSoft: 'rgba(255, 255, 255, 0.70)',
-    surfaceStrong: 'rgba(255, 255, 255, 0.96)',
-    glow: 'rgba(139, 92, 246, 0.18)',
-    washTop: 'rgba(139, 92, 246, 0.16)',
-    washMid: 'rgba(216, 180, 254, 0.10)',
-    sheenStart: 'rgba(109, 40, 217, 0.06)',
-    sheenEnd: 'rgba(255, 255, 255, 0.08)',
+    surfaceSoft: '#FFFFFF',
+    surfaceStrong: '#FFFFFF',
+    glow: 'rgba(24, 24, 27, 0.08)',
+    washTop: '#F7F7FB',
+    washMid: '#F7F7FB',
+    sheenStart: 'transparent',
+    sheenEnd: 'transparent',
     historyEmpty: 'rgba(233, 213, 255, 0.52)',
     historyPartial: 'rgba(168, 85, 247, 0.34)',
     historyComplete: '#A855F7',
   },
   dark: {
     text: '#F5F3FF',
-    background: '#08080A',
-    backgroundElement: 'rgba(24, 24, 27, 0.86)',
-    backgroundSelected: 'rgba(39, 39, 42, 0.74)',
-    border: 'rgba(255, 255, 255, 0.09)',
-    borderStrong: 'rgba(192, 132, 252, 0.28)',
+    background: '#0B0B0F',
+    backgroundElement: '#17171D',
+    backgroundSelected: '#22222A',
+    border: '#2B2B34',
+    borderStrong: '#4B3A68',
     accent: '#A855F7',
     accentSoft: 'rgba(168, 85, 247, 0.18)',
     accentStrong: '#C084FC',
@@ -44,13 +42,13 @@ export const Colors = {
     danger: '#FB7185',
     textSecondary: '#A1A1AA',
     textMuted: '#71717A',
-    surfaceSoft: 'rgba(17, 17, 20, 0.72)',
-    surfaceStrong: 'rgba(39, 39, 42, 0.92)',
-    glow: 'rgba(168, 85, 247, 0.24)',
-    washTop: 'rgba(168, 85, 247, 0.20)',
-    washMid: 'rgba(88, 28, 135, 0.08)',
-    sheenStart: 'rgba(255, 255, 255, 0.07)',
-    sheenEnd: 'rgba(255, 255, 255, 0.01)',
+    surfaceSoft: '#17171D',
+    surfaceStrong: '#22222A',
+    glow: 'rgba(0, 0, 0, 0.24)',
+    washTop: '#0B0B0F',
+    washMid: '#0B0B0F',
+    sheenStart: 'transparent',
+    sheenEnd: 'transparent',
     historyEmpty: 'rgba(63, 63, 70, 0.52)',
     historyPartial: 'rgba(192, 132, 252, 0.56)',
     historyComplete: '#A855F7',
@@ -76,12 +74,6 @@ export const Fonts = Platform.select({
     rounded: 'normal',
     mono: 'monospace',
   },
-  web: {
-    sans: 'var(--font-display)',
-    serif: 'var(--font-serif)',
-    rounded: 'var(--font-rounded)',
-    mono: 'var(--font-mono)',
-  },
 });
 
 export const Spacing = {
@@ -95,4 +87,3 @@ export const Spacing = {
 } as const;
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
-export const MaxContentWidth = 560;

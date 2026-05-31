@@ -19,15 +19,12 @@ function getTodayKey(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-export function useHabitsMvp() {
+export function useHabits() {
   const { locale, t } = useTranslation();
   const [habits, setHabits] = useState<Habit[]>([]);
   const [todayCompletions, setTodayCompletions] = useState<HabitCompletion[]>([]);
   const [status, setStatus] = useState<AsyncStatus>('loading');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [newHabitName, setNewHabitName] = useState('');
-  const [editingHabitId, setEditingHabitId] = useState<string | null>(null);
-  const [editingHabitName, setEditingHabitName] = useState('');
   const [filter, setFilter] = useState<HabitFilter>('all');
   const [displayedMonth, setDisplayedMonth] = useState(() => startOfMonth(new Date()));
   const [monthCompletions, setMonthCompletions] = useState<HabitCompletion[]>([]);
@@ -107,22 +104,6 @@ export function useHabitsMvp() {
     return habits;
   }, [completedHabitIds, filter, habits]);
 
-  const createHabit = useCallback(async () => {
-    const name = newHabitName.trim();
-    if (!name) {
-      return;
-    }
-
-    await HabitRepository.create({
-      name,
-      recurrenceType: 'daily',
-      remindersEnabled: false,
-      isActive: true,
-    });
-    setNewHabitName('');
-    await loadHabits();
-  }, [loadHabits, newHabitName]);
-
   const createHabitFromDraft = useCallback(
     async (input: CreateHabitInput) => {
       if (!input.name.trim()) {
@@ -138,31 +119,6 @@ export function useHabitsMvp() {
     },
     [loadHabits]
   );
-
-  const startEditingHabit = useCallback((habit: Habit) => {
-    setEditingHabitId(habit.id);
-    setEditingHabitName(habit.name);
-  }, []);
-
-  const cancelEditingHabit = useCallback(() => {
-    setEditingHabitId(null);
-    setEditingHabitName('');
-  }, []);
-
-  const saveEditingHabit = useCallback(async () => {
-    if (!editingHabitId) {
-      return;
-    }
-
-    const name = editingHabitName.trim();
-    if (!name) {
-      return;
-    }
-
-    await HabitRepository.update(editingHabitId, { name });
-    cancelEditingHabit();
-    await loadHabits();
-  }, [cancelEditingHabit, editingHabitId, editingHabitName, loadHabits]);
 
   const updateHabitFromDraft = useCallback(
     async (habitId: string, input: UpdateHabitInput) => {
@@ -241,25 +197,16 @@ export function useHabitsMvp() {
 
   return {
     completedHabitIds,
-    createHabit,
     createHabitFromDraft,
     deactivateHabit,
-    editingHabitId,
-    editingHabitName,
     errorMessage,
     filter,
     habits,
     isLoading: status === 'loading',
     monthHistoryDays,
     monthLabel,
-    newHabitName,
     pendingCount: habits.length - completedHabitIds.size,
-    saveEditingHabit,
-    setEditingHabitName,
     setFilter,
-    setNewHabitName,
-    startEditingHabit,
-    cancelEditingHabit,
     todayKey,
     toggleTodayCompletion,
     totalCompletedToday: completedHabitIds.size,
