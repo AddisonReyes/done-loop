@@ -23,7 +23,8 @@ These instructions apply to the whole repository. More specific `AGENTS.md` file
 ## Project Awareness
 
 - The current product focus is the Expo React Native app in `mobile/`.
-- The `frontend/` directory contains a legacy Next.js implementation.
+- The public website lives in `website/` and is a Next.js App Router marketing/legal site.
+- Done Loop is intended to be a free, local-first, open source productivity app with no ads, memberships, subscriptions, in-app purchases, analytics, account system, or cloud sync.
 - Read the nearest `AGENTS.md`, package scripts, configs, and existing code before making changes.
 - Use the repository's existing dependencies and patterns before introducing new ones.
 - Do not change app identity, native configuration, storage schemas, or migrations casually.
@@ -40,9 +41,10 @@ These instructions apply to the whole repository. More specific `AGENTS.md` file
 - For mobile changes, prefer:
   - `cd mobile && npm run typecheck`
   - `cd mobile && npm run lint`
-- For frontend changes, prefer:
-  - `cd frontend && npm run lint`
-  - `cd frontend && npx tsc -p tsconfig.json --noEmit`
+- For website changes, prefer:
+  - `cd website && npm run test`
+  - `cd website && npm run lint`
+  - `cd website && npm run build`
 - If a check cannot be run, document why and call out the remaining risk.
 
 ## Git Hygiene

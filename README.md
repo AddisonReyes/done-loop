@@ -1,6 +1,8 @@
 # Done Loop
 
-Done Loop is a local-first productivity app for habits, tasks, and lightweight daily planning. The current product focus is the Expo React Native app in `mobile/`.
+Done Loop is a free, open source, local-first productivity app for habits, tasks, calendar context, reminders, and lightweight daily planning. The current product focus is the Expo React Native app in `mobile/`, with a production-facing website in `website/`.
+
+Done Loop has no ads, memberships, subscriptions, in-app purchases, analytics, account system, backend, or cloud sync. App data is stored locally on the user's device.
 
 ## Features
 
@@ -14,12 +16,12 @@ Done Loop is a local-first productivity app for habits, tasks, and lightweight d
 - App color personalization: purple, blue, green, red, yellow, and pink.
 - English and Spanish localization.
 - Fraunces typography applied across the app.
+- Privacy, terms, and source-code links available from the app settings.
 
 ## Project Structure
 
 - `mobile/` - Expo React Native app for Android, iOS, and Expo-supported development workflows.
-- `website/` - Next.js marketing landing page for Done Loop.
-- `backend/` - placeholder/backend workspace.
+- `website/` - Next.js App Router marketing and legal website for Done Loop.
 
 ## Mobile Tech Stack
 
@@ -58,6 +60,7 @@ npm run start
 npm run android
 npm run typecheck
 npm run lint
+npm run test
 ```
 
 ## Data Storage
@@ -71,8 +74,8 @@ User settings currently include:
 - Accent color
 - Language
 - Date format
-- Plan/status metadata
-- Privacy and terms URLs when available
+- Privacy policy URL
+- Terms URL
 
 ## Design Notes
 
@@ -80,10 +83,28 @@ Done Loop uses a calm, card-based mobile UI with light and dark themes. The acce
 
 ## Website
 
-The `website/` directory contains the current marketing landing page:
+The `website/` directory contains the production-facing landing and legal pages:
 
 ```bash
 cd website
 npm install
 npm run dev
 ```
+
+Run website checks with:
+
+```bash
+cd website
+npm run test
+npm run lint
+npm run build
+```
+
+The website is deployed at https://done-loop.pages.dev/.
+
+## Legal And Source
+
+- Privacy Policy: https://done-loop.pages.dev/privacy
+- Terms of Service: https://done-loop.pages.dev/terms
+- Source code: https://github.com/AddisonReyes/done-loop
+- License: MIT, see `LICENSE` and `LICENSE.md`.

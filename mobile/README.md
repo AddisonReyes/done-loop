@@ -1,6 +1,8 @@
 # Done Loop Mobile
 
-Done Loop is an Expo React Native productivity app for building habits, managing tasks, and reviewing daily progress in one local-first experience.
+Done Loop is a free, open source Expo React Native productivity app for building habits, managing tasks, and reviewing daily progress in one local-first experience.
+
+The app has no ads, memberships, subscriptions, in-app purchases, analytics, account system, backend, or cloud sync. User data stays local on the device.
 
 ## What The App Does
 
@@ -10,6 +12,7 @@ Done Loop is an Expo React Native productivity app for building habits, managing
 - Stores app data locally with SQLite.
 - Supports English and Spanish.
 - Includes settings for notifications, theme, app color, language, and date format.
+- Includes links to the Privacy Policy, Terms of Service, and source code.
 - Supports system, light, and dark theme modes.
 - Lets users personalize the app accent color with purple, blue, green, red, yellow, or pink.
 - Uses Fraunces as the app-wide typography.
@@ -60,6 +63,7 @@ npm run android
 npm run dev
 npm run typecheck
 npm run lint
+npm run test
 ```
 
 ## App Structure
@@ -87,6 +91,8 @@ The database currently stores:
 - User settings
 
 When changing persisted data, add a migration in `src/storage/migrations` and keep existing user data compatible.
+
+User settings include notification, theme, accent color, language, date format, privacy URL, and terms URL values. The app should remain free-only unless product direction explicitly changes.
 
 ## Theming And Personalization
 
@@ -120,6 +126,14 @@ npm run lint
 
 - Follow the root `AGENTS.md` and this directory's `AGENTS.md`.
 - Keep changes typed, focused, and consistent with the existing feature structure.
+- Preserve the free, local-first, no-ads/no-purchases product model.
 - Prefer existing shared components before creating new UI patterns.
 - Treat local data carefully; migrations should be safe for existing installs.
 - Do not change app identity, bundle/package IDs, native config, or permissions unless the task requires it.
+
+## Legal And Source
+
+- Privacy Policy: https://done-loop.pages.dev/privacy
+- Terms of Service: https://done-loop.pages.dev/terms
+- Source code: https://github.com/AddisonReyes/done-loop
+- License: MIT, see the repository root `LICENSE` and `LICENSE.md`.
