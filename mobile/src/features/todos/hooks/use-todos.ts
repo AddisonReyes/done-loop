@@ -59,11 +59,14 @@ export function useTodos() {
         return;
       }
 
-      const notificationId = await NotificationService.scheduleTodoReminderAsync({
-        title: draft.title,
-        dueAt: draft.dueAt,
-        language,
-      });
+      const settings = await SettingsRepository.get();
+      const notificationId = settings.notificationsEnabled
+        ? await NotificationService.scheduleTodoReminderAsync({
+            title: draft.title,
+            dueAt: draft.dueAt,
+            language,
+          })
+        : undefined;
 
       await TodoRepository.create({
         ...draft,
@@ -81,10 +84,22 @@ export function useTodos() {
         return;
       }
 
-      await TodoRepository.update(todo.id, draft);
+      await NotificationService.cancelAsync(todo.notificationId);
+      const settings = await SettingsRepository.get();
+      const nextTitle = draft.title ?? todo.title;
+      const nextDueAt = 'dueAt' in input ? draft.dueAt : todo.dueAt;
+      const notificationId = settings.notificationsEnabled
+        ? await NotificationService.scheduleTodoReminderAsync({
+            title: nextTitle,
+            dueAt: nextDueAt,
+            language,
+          })
+        : undefined;
+
+      await TodoRepository.update(todo.id, { ...draft, notificationId });
       await loadTodos();
     },
-    [loadTodos]
+    [language, loadTodos]
   );
 
   const completeTodo = useCallback(

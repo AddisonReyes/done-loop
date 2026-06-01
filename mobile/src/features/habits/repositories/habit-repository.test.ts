@@ -45,6 +45,7 @@ describe('HabitRepository', () => {
       null,
       '07:30',
       1,
+      null,
       1,
       expect.any(String),
       expect.any(String),
@@ -63,6 +64,7 @@ describe('HabitRepository', () => {
           custom_interval_days: null,
           reminder_time: null,
           reminders_enabled: 0,
+          notification_id: null,
           is_active: 1,
           created_at: '2026-05-30T00:00:00.000Z',
           updated_at: '2026-05-30T00:00:00.000Z',
@@ -103,4 +105,3 @@ describe('HabitRepository', () => {
     expect(database.runAsync).toHaveBeenCalledWith('DELETE FROM habits WHERE id = ?;', 'habit_1');
   });
 });
-

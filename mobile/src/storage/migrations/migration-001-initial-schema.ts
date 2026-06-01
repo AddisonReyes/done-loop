@@ -15,6 +15,7 @@ export const migration001InitialSchema = {
         custom_interval_days INTEGER,
         reminder_time TEXT,
         reminders_enabled INTEGER NOT NULL CHECK (reminders_enabled IN (0, 1)),
+        notification_id TEXT,
         is_active INTEGER NOT NULL CHECK (is_active IN (0, 1)),
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,

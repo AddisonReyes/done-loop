@@ -35,6 +35,9 @@ export function useSettings() {
   const setNotificationsEnabled = useCallback(
     async (enabled: boolean) => {
       const granted = enabled ? await NotificationService.requestPermissionsAsync() : false;
+      if (!enabled) {
+        await NotificationService.cancelAllAsync();
+      }
       setSettings(await SettingsRepository.update({ notificationsEnabled: enabled && granted }));
     },
     []

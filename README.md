@@ -100,11 +100,11 @@ npm run lint
 npm run build
 ```
 
-The website is deployed at https://done-loop.pages.dev/.
+The website is deployed at <https://done-loop.pages.dev/>.
 
 ## Legal And Source
 
-- Privacy Policy: https://done-loop.pages.dev/privacy
-- Terms of Service: https://done-loop.pages.dev/terms
-- Source code: https://github.com/AddisonReyes/done-loop
+- Privacy Policy: <https://done-loop.pages.dev/privacy>
+- Terms of Service: <https://done-loop.pages.dev/terms>
+- Source code: <https://github.com/AddisonReyes/done-loop>
 - License: MIT, see `LICENSE` and `LICENSE.md`.

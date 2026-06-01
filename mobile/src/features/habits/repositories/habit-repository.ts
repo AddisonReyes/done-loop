@@ -17,6 +17,7 @@ type HabitRow = {
   custom_interval_days: number | null;
   reminder_time: string | null;
   reminders_enabled: number;
+  notification_id?: string | null;
   is_active: number;
   created_at: string;
   updated_at: string;
@@ -32,6 +33,7 @@ function mapHabitRow(row: HabitRow): Habit {
     customIntervalDays: row.custom_interval_days ?? undefined,
     reminderTime: optionalString(row.reminder_time),
     remindersEnabled: fromSQLiteBoolean(row.reminders_enabled),
+    notificationId: optionalString(row.notification_id ?? null),
     isActive: fromSQLiteBoolean(row.is_active),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -51,6 +53,7 @@ export const HabitRepository = {
       customIntervalDays: input.customIntervalDays,
       reminderTime: input.reminderTime,
       remindersEnabled: input.remindersEnabled ?? false,
+      notificationId: input.notificationId,
       isActive: input.isActive ?? true,
       createdAt: now,
       updatedAt: now,
@@ -65,11 +68,12 @@ export const HabitRepository = {
         custom_interval_days,
         reminder_time,
         reminders_enabled,
+        notification_id,
         is_active,
         created_at,
         updated_at,
         deleted_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
       habit.id,
       habit.name,
       nullableString(habit.description),
@@ -77,6 +81,7 @@ export const HabitRepository = {
       habit.customIntervalDays ?? null,
       nullableString(habit.reminderTime),
       toSQLiteBoolean(habit.remindersEnabled),
+      nullableString(habit.notificationId),
       toSQLiteBoolean(habit.isActive),
       habit.createdAt,
       habit.updatedAt,
@@ -131,6 +136,7 @@ export const HabitRepository = {
            custom_interval_days = ?,
            reminder_time = ?,
            reminders_enabled = ?,
+           notification_id = ?,
            is_active = ?,
            updated_at = ?,
            deleted_at = ?
@@ -141,6 +147,7 @@ export const HabitRepository = {
       next.customIntervalDays ?? null,
       nullableString(next.reminderTime),
       toSQLiteBoolean(next.remindersEnabled),
+      nullableString(next.notificationId),
       toSQLiteBoolean(next.isActive),
       next.updatedAt,
       nullableString(next.deletedAt),

@@ -2,26 +2,30 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { HabitDayActivity } from '@/features/habits/components/habit-month-history';
 import { HabitCompletionRepository, HabitRepository } from '@/features/habits/repositories';
+import { NotificationService } from '@/features/notifications/services/notification-service';
+import { SettingsRepository } from '@/features/settings/repositories/settings-repository';
 import type { CreateHabitInput, Habit, HabitCompletion, UpdateHabitInput } from '@/features/habits/types';
 import {
   addMonths,
   formatMonthLabel,
   getMonthDateKeys,
   startOfMonth,
+  toDateKey,
 } from '@/shared/utils/date';
 import { useTranslation } from '@/i18n';
 import { normalizeHabitCreateDraft, normalizeHabitUpdateDraft } from '../services/habit-draft';
+import { getHabitsDueOnDate } from '../services/habit-recurrence';
 
 export type HabitFilter = 'all' | 'pendingToday' | 'completedToday';
 
 type AsyncStatus = 'idle' | 'loading' | 'error';
 
 function getTodayKey(): string {
-  return new Date().toISOString().slice(0, 10);
+  return toDateKey(new Date());
 }
 
 export function useHabits() {
-  const { locale, t } = useTranslation();
+  const { language, locale, t } = useTranslation();
   const [habits, setHabits] = useState<Habit[]>([]);
   const [todayCompletions, setTodayCompletions] = useState<HabitCompletion[]>([]);
   const [status, setStatus] = useState<AsyncStatus>('loading');
@@ -34,13 +38,19 @@ export function useHabits() {
   const monthDateKeys = useMemo(() => getMonthDateKeys(displayedMonth), [displayedMonth]);
   const monthLabel = useMemo(() => formatMonthLabel(displayedMonth, locale), [displayedMonth, locale]);
 
+  const habitsDueToday = useMemo(() => getHabitsDueOnDate(habits, todayKey), [habits, todayKey]);
+  const dueHabitIdsToday = useMemo(
+    () => new Set(habitsDueToday.map((habit) => habit.id)),
+    [habitsDueToday]
+  );
+
   const completedHabitIds = useMemo(() => {
     return new Set(
       todayCompletions
-        .filter((completion) => completion.completed)
+        .filter((completion) => completion.completed && dueHabitIdsToday.has(completion.habitId))
         .map((completion) => completion.habitId)
     );
-  }, [todayCompletions]);
+  }, [dueHabitIdsToday, todayCompletions]);
 
   const loadHabits = useCallback(async () => {
     try {
@@ -95,15 +105,15 @@ export function useHabits() {
 
   const visibleHabits = useMemo(() => {
     if (filter === 'completedToday') {
-      return habits.filter((habit) => completedHabitIds.has(habit.id));
+      return habitsDueToday.filter((habit) => completedHabitIds.has(habit.id));
     }
 
     if (filter === 'pendingToday') {
-      return habits.filter((habit) => !completedHabitIds.has(habit.id));
+      return habitsDueToday.filter((habit) => !completedHabitIds.has(habit.id));
     }
 
-    return habits;
-  }, [completedHabitIds, filter, habits]);
+    return habitsDueToday;
+  }, [completedHabitIds, filter, habitsDueToday]);
 
   const createHabitFromDraft = useCallback(
     async (input: CreateHabitInput) => {
@@ -112,10 +122,24 @@ export function useHabits() {
         return;
       }
 
-      await HabitRepository.create(draft);
+      const createdHabit = await HabitRepository.create(draft);
+      const settings = await SettingsRepository.get();
+      const notificationId =
+        settings.notificationsEnabled && draft.remindersEnabled
+          ? await NotificationService.scheduleHabitReminderAsync({
+              habitId: createdHabit.id,
+              habitName: draft.name,
+              reminderTime: draft.reminderTime,
+              language,
+            })
+          : undefined;
+
+      if (notificationId) {
+        await HabitRepository.update(createdHabit.id, { notificationId });
+      }
       await loadHabits();
     },
-    [loadHabits]
+    [language, loadHabits]
   );
 
   const updateHabitFromDraft = useCallback(
@@ -125,20 +149,39 @@ export function useHabits() {
         return;
       }
 
-      await HabitRepository.update(habitId, draft);
+      const existing = habits.find((habit) => habit.id === habitId) ?? (await HabitRepository.findById(habitId));
+      const nextReminderTime = 'reminderTime' in input ? draft.reminderTime : existing?.reminderTime;
+      const nextName = draft.name ?? existing?.name ?? '';
+      const nextRemindersEnabled =
+        'remindersEnabled' in input ? draft.remindersEnabled ?? false : existing?.remindersEnabled ?? false;
+      const settings = await SettingsRepository.get();
+
+      await NotificationService.cancelAsync(existing?.notificationId);
+      const notificationId =
+        settings.notificationsEnabled && nextRemindersEnabled
+          ? await NotificationService.scheduleHabitReminderAsync({
+              habitId,
+              habitName: nextName,
+              reminderTime: nextReminderTime,
+              language,
+            })
+          : undefined;
+
+      await HabitRepository.update(habitId, { ...draft, notificationId });
       await loadHabits();
     },
-    [loadHabits]
+    [habits, language, loadHabits]
   );
 
   const deleteHabit = useCallback(
     async (habitId: string) => {
       await HabitCompletionRepository.deleteByHabitId(habitId);
+      await NotificationService.cancelAsync(habits.find((habit) => habit.id === habitId)?.notificationId);
       await HabitRepository.deleteById(habitId);
       await loadHabits();
       await loadMonthHistory();
     },
-    [loadHabits, loadMonthHistory]
+    [habits, loadHabits, loadMonthHistory]
   );
 
   const toggleTodayCompletion = useCallback(
@@ -155,11 +198,19 @@ export function useHabits() {
   );
 
   const monthHistoryDays = useMemo(() => {
-    const activeHabitCount = habits.length;
+    const habitIdsByDate = new Map<string, Set<string>>();
     const completionsByDate = new Map<string, number>();
 
+    for (const dateKey of monthDateKeys) {
+      habitIdsByDate.set(
+        dateKey,
+        new Set(getHabitsDueOnDate(habits, dateKey).map((habit) => habit.id))
+      );
+    }
+
     for (const completion of monthCompletions) {
-      if (!completion.completed) {
+      const habitIdsDueOnDate = habitIdsByDate.get(completion.date);
+      if (!completion.completed || !habitIdsDueOnDate?.has(completion.habitId)) {
         continue;
       }
 
@@ -168,6 +219,7 @@ export function useHabits() {
 
     return monthDateKeys.map((dateKey) => {
       const completedCount = completionsByDate.get(dateKey) ?? 0;
+      const activeHabitCount = habitIdsByDate.get(dateKey)?.size ?? 0;
       let activity: HabitDayActivity = 'none';
 
       if (completedCount > 0 && activeHabitCount > 0) {
@@ -180,7 +232,7 @@ export function useHabits() {
         activity,
       };
     });
-  }, [habits.length, monthCompletions, monthDateKeys]);
+  }, [habits, monthCompletions, monthDateKeys]);
 
   const goToPreviousMonth = useCallback(() => {
     setDisplayedMonth((current) => addMonths(current, -1));
@@ -200,7 +252,7 @@ export function useHabits() {
     isLoading: status === 'loading',
     monthHistoryDays,
     monthLabel,
-    pendingCount: habits.length - completedHabitIds.size,
+    pendingCount: habitsDueToday.length - completedHabitIds.size,
     setFilter,
     todayKey,
     toggleTodayCompletion,

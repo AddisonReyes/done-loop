@@ -8,6 +8,7 @@ jest.mock('expo-notifications', () => ({
     DATE: 'date',
   },
   cancelScheduledNotificationAsync: jest.fn(),
+  cancelAllScheduledNotificationsAsync: jest.fn(),
   getPermissionsAsync: jest.fn(),
   requestPermissionsAsync: jest.fn(),
   scheduleNotificationAsync: jest.fn(),
@@ -69,4 +70,3 @@ describe('NotificationService', () => {
     expect(mockedNotifications.scheduleNotificationAsync).not.toHaveBeenCalled();
   });
 });
-

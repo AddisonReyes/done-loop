@@ -8,6 +8,7 @@ export type Habit = {
   customIntervalDays?: number;
   reminderTime?: string;
   remindersEnabled: boolean;
+  notificationId?: string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -21,6 +22,7 @@ export type CreateHabitInput = {
   customIntervalDays?: number;
   reminderTime?: string;
   remindersEnabled?: boolean;
+  notificationId?: string;
   isActive?: boolean;
 };
 

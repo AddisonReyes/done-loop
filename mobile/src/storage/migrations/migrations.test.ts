@@ -4,6 +4,7 @@ import { runMigrationsAsync } from './index';
 import { migration002AddLanguageSetting } from './migration-002-add-language-setting';
 import { migration003AddDateFormatSetting } from './migration-003-add-date-format-setting';
 import { migration005AddAccentColorSetting } from './migration-005-add-accent-color-setting';
+import { migration006AddHabitNotificationId } from './migration-006-add-habit-notification-id';
 
 function createMigrationDatabase(appliedIds: number[] = []) {
   const rows = appliedIds.map((id) => ({ id }));
@@ -39,7 +40,7 @@ describe('migrations', () => {
 
     await runMigrationsAsync(database as unknown as SQLiteDatabase);
 
-    expect(database.withTransactionAsync).toHaveBeenCalledTimes(5);
+    expect(database.withTransactionAsync).toHaveBeenCalledTimes(6);
     expect(database.runAsync).toHaveBeenCalledWith(
       'INSERT INTO schema_migrations (id, name, applied_at) VALUES (?, ?, ?);',
       1,
@@ -49,7 +50,7 @@ describe('migrations', () => {
   });
 
   it('skips migrations that are already applied', async () => {
-    const database = createMigrationDatabase([1, 2, 3, 4, 5]);
+    const database = createMigrationDatabase([1, 2, 3, 4, 5, 6]);
 
     await runMigrationsAsync(database as unknown as SQLiteDatabase);
 
@@ -57,11 +58,12 @@ describe('migrations', () => {
   });
 
   it('keeps additive settings migrations idempotent', async () => {
-    const database = createTableInfoDatabase(['language', 'date_format', 'accent_color']);
+    const database = createTableInfoDatabase(['language', 'date_format', 'accent_color', 'notification_id']);
 
     await migration002AddLanguageSetting.up(database as unknown as SQLiteDatabase);
     await migration003AddDateFormatSetting.up(database as unknown as SQLiteDatabase);
     await migration005AddAccentColorSetting.up(database as unknown as SQLiteDatabase);
+    await migration006AddHabitNotificationId.up(database as unknown as SQLiteDatabase);
 
     expect(database.execAsync).not.toHaveBeenCalled();
   });

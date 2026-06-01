@@ -2,6 +2,7 @@ import * as Notifications from 'expo-notifications';
 
 import type { UserLanguagePreference } from '@/features/settings/types';
 import { translations } from '@/i18n/translations';
+import { dateKeyToLocalDate } from '@/shared/utils/date';
 import { parseReminderTime } from './reminder-time';
 
 type ScheduleHabitReminderInput = {
@@ -64,8 +65,14 @@ export const NotificationService = {
       return undefined;
     }
 
-    const dueDate = new Date(dueAt);
-    if (Number.isNaN(dueDate.getTime()) || dueDate.getTime() <= Date.now()) {
+    const dueDate = dateKeyToLocalDate(dueAt);
+    if (!dueDate) {
+      return undefined;
+    }
+
+    dueDate.setHours(9, 0, 0, 0);
+
+    if (dueDate.getTime() <= Date.now()) {
       return undefined;
     }
 
@@ -87,5 +94,9 @@ export const NotificationService = {
     }
 
     await Notifications.cancelScheduledNotificationAsync(notificationId);
+  },
+
+  async cancelAllAsync(): Promise<void> {
+    await Notifications.cancelAllScheduledNotificationsAsync();
   },
 };

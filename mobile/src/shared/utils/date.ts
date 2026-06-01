@@ -1,7 +1,11 @@
 import type { UserDateFormatPreference } from '@/features/settings/types';
 
 export function toDateKey(date: Date): string {
-  return date.toISOString().slice(0, 10);
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+  ].join('-');
 }
 
 export function isDateKey(value: string | undefined): value is string {
@@ -64,6 +68,15 @@ export function dateKeyToLocalDate(dateKey: string): Date | null {
 
   const [year, month, day] = dateKey.split('-').map(Number);
   return new Date(year, month - 1, day);
+}
+
+export function dateKeyToUtcDayNumber(dateKey: string): number | null {
+  if (!isDateKey(dateKey)) {
+    return null;
+  }
+
+  const [year, month, day] = dateKey.split('-').map(Number);
+  return Math.floor(Date.UTC(year, month - 1, day) / 86_400_000);
 }
 
 export function formatDateKey(
