@@ -1,6 +1,6 @@
 import Constants from 'expo-constants';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Pressable, StyleSheet, Switch, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, Switch, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { AccentColors, Spacing } from '@/constants/theme';
@@ -44,6 +44,8 @@ const accentColorOptions: { value: UserAccentColorPreference; labelKey: string }
   { value: 'yellow', labelKey: 'settings.accentColor.yellow' },
   { value: 'pink', labelKey: 'settings.accentColor.pink' },
 ];
+
+const SourceCodeUrl = 'https://github.com/AddisonReyes/done-loop';
 
 export default function SettingsScreen() {
   const theme = useTheme();
@@ -135,8 +137,9 @@ export default function SettingsScreen() {
 
           <SectionCard title={t('settings.information')}>
             <InfoRow label={t('settings.version')} value={Constants.expoConfig?.version ?? '1.0.0'} />
-            <InfoRow label={t('settings.privacy')} value={settings.privacyPolicyUrl ?? t('settings.pending')} />
-            <InfoRow label={t('settings.terms')} value={settings.termsUrl ?? t('settings.pending')} />
+            <LinkInfoRow label={t('settings.privacy')} value={settings.privacyPolicyUrl} />
+            <LinkInfoRow label={t('settings.terms')} value={settings.termsUrl} />
+            <LinkInfoRow label={t('settings.sourceCode')} value={SourceCodeUrl} />
           </SectionCard>
         </>
       )}
@@ -192,6 +195,27 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+function LinkInfoRow({ label, value }: { label: string; value: string }) {
+  const theme = useTheme();
+
+  return (
+    <Pressable
+      accessibilityRole="link"
+      accessibilityLabel={`${label}: ${value}`}
+      onPress={() => {
+        void Linking.openURL(value);
+      }}
+      style={({ pressed }) => [styles.infoRow, pressed && styles.pressedRow]}>
+      <ThemedText type="small" themeColor="textSecondary">
+        {label}
+      </ThemedText>
+      <ThemedText type="smallBold" style={[styles.linkValue, { color: theme.accentStrong }]}>
+        {value}
+      </ThemedText>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   row: {
     minHeight: 68,
@@ -209,6 +233,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: Spacing.two,
+  },
+  pressedRow: {
+    opacity: 0.72,
+  },
+  linkValue: {
+    flex: 1,
+    flexShrink: 1,
+    textAlign: 'right',
   },
   fieldGroup: {
     gap: Spacing.two,

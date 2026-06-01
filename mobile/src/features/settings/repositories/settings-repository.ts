@@ -11,10 +11,13 @@ import type {
   UserAccentColorPreference,
   UserDateFormatPreference,
   UserLanguagePreference,
-  UserPlan,
   UserSettings,
   UserThemePreference,
 } from '../types';
+
+const PrivacyPolicyUrl = 'https://done-loop.pages.dev/privacy';
+const TermsUrl = 'https://done-loop.pages.dev/terms';
+const FreePlan = 'free';
 
 type UserSettingsRow = {
   notifications_enabled: number;
@@ -22,7 +25,6 @@ type UserSettingsRow = {
   accent_color: UserAccentColorPreference;
   language: UserLanguagePreference;
   date_format: UserDateFormatPreference;
-  plan: UserPlan;
   privacy_policy_url: string | null;
   terms_url: string | null;
 };
@@ -33,7 +35,8 @@ const defaultSettings: UserSettings = {
   accentColor: 'purple',
   language: 'en',
   dateFormat: 'dmy',
-  plan: 'free',
+  privacyPolicyUrl: PrivacyPolicyUrl,
+  termsUrl: TermsUrl,
 };
 
 function mapUserSettingsRow(row: UserSettingsRow): UserSettings {
@@ -43,9 +46,8 @@ function mapUserSettingsRow(row: UserSettingsRow): UserSettings {
     accentColor: row.accent_color,
     language: row.language,
     dateFormat: row.date_format,
-    plan: row.plan,
-    privacyPolicyUrl: optionalString(row.privacy_policy_url),
-    termsUrl: optionalString(row.terms_url),
+    privacyPolicyUrl: optionalString(row.privacy_policy_url) ?? PrivacyPolicyUrl,
+    termsUrl: optionalString(row.terms_url) ?? TermsUrl,
   };
 }
 
@@ -53,7 +55,7 @@ export const SettingsRepository = {
   async get(): Promise<UserSettings> {
     const database = await getDatabaseAsync();
     const row = await database.getFirstAsync<UserSettingsRow>(
-      `SELECT notifications_enabled, theme, accent_color, language, date_format, plan, privacy_policy_url, terms_url
+      `SELECT notifications_enabled, theme, accent_color, language, date_format, privacy_policy_url, terms_url
        FROM user_settings
        WHERE id = 1;`
     );
@@ -68,7 +70,7 @@ export const SettingsRepository = {
   async update(input: UpdateUserSettingsInput): Promise<UserSettings> {
     const database = await getDatabaseAsync();
     const existingRow = await database.getFirstAsync<UserSettingsRow>(
-      `SELECT notifications_enabled, theme, accent_color, language, date_format, plan, privacy_policy_url, terms_url
+      `SELECT notifications_enabled, theme, accent_color, language, date_format, privacy_policy_url, terms_url
        FROM user_settings
        WHERE id = 1;`
     );
@@ -108,7 +110,7 @@ export const SettingsRepository = {
       next.accentColor,
       next.language,
       next.dateFormat,
-      next.plan,
+      FreePlan,
       nullableString(next.privacyPolicyUrl),
       nullableString(next.termsUrl),
       now,

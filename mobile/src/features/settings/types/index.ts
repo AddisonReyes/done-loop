@@ -3,7 +3,6 @@ export type {
   UserAccentColorPreference,
   UserDateFormatPreference,
   UserLanguagePreference,
-  UserPlan,
   UserSettings,
   UserThemePreference,
 } from './user-settings';

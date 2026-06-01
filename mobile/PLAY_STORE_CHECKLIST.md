@@ -10,10 +10,10 @@
 
 ## Assets
 
-- [ ] Final app icon 512x512
-- [ ] Adaptive Android icon
-- [ ] Splash screen
-- [ ] Notification icon
+- [x] Final app icon configured
+- [x] Adaptive Android icon configured
+- [x] Splash screen configured
+- [x] Notification icon configured
 - [ ] Phone screenshots
 - [ ] Feature graphic if needed
 
@@ -21,16 +21,19 @@
 
 - [ ] Short description
 - [ ] Long description
-- [ ] Privacy policy URL
-- [ ] Terms URL if purchases are enabled
+- [x] Privacy policy URL: `https://done-loop.pages.dev/privacy`
+- [x] Terms URL: `https://done-loop.pages.dev/terms`
+- [x] Source code URL in app: `https://github.com/AddisonReyes/done-loop`
 - [ ] Content rating questionnaire
 - [ ] Data Safety form
+- [ ] Declare app has no ads
+- [ ] Declare app has no in-app purchases or subscriptions
 
 ## Permissions
 
 - Notifications: used for local habit and task reminders.
 - SQLite/local storage: stores user habits, task history, settings, and completion history locally.
-- No backend, login, cloud sync, real ads, analytics, or real payments are implemented in this stage.
+- No backend, login, cloud sync, ads, analytics, memberships, subscriptions, or payments are implemented.
 
 ## EAS Build
 
@@ -46,5 +49,4 @@ Before production:
 - [ ] Create `eas.json` profiles for development, preview, and production.
 - [ ] Generate an Android App Bundle.
 - [ ] Test internal release on Google Play Console.
-- [ ] Use test ad IDs only during development if ads are added later.
-- [ ] Configure real Play Billing products only when purchases are implemented.
+- [ ] Confirm the Play Console store listing shows no ads and no paid products.

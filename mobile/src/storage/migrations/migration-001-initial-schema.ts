@@ -65,7 +65,7 @@ export const migration001InitialSchema = {
         accent_color TEXT NOT NULL DEFAULT 'purple' CHECK (accent_color IN ('purple', 'blue', 'green', 'red', 'yellow', 'pink')),
         language TEXT NOT NULL DEFAULT 'en' CHECK (language IN ('en', 'es')),
         date_format TEXT NOT NULL DEFAULT 'dmy' CHECK (date_format IN ('iso', 'mdy', 'dmy', 'long')),
-        plan TEXT NOT NULL CHECK (plan IN ('free', 'no_ads', 'premium')),
+        plan TEXT NOT NULL DEFAULT 'free' CHECK (plan IN ('free')),
         privacy_policy_url TEXT,
         terms_url TEXT,
         created_at TEXT NOT NULL,
