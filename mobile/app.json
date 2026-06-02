@@ -8,7 +8,7 @@
     "scheme": "doneloop",
     "userInterfaceStyle": "automatic",
     "android": {
-      "package": "com.addisonreyes.doneloop",
+      "package": "app.dakotitah.doneloop",
       "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#08080A",
@@ -24,6 +24,8 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#08080A",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 76,
           "android": {
             "image": "./assets/images/splash-icon.png",
             "imageWidth": 76
@@ -40,9 +42,18 @@
       ],
       "@react-native-community/datetimepicker"
     ],
+    "web": {
+      "favicon": "./assets/images/favicon.png"
+    },
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "c6a6e5bf-c905-405d-a7c9-846dfea5b97d"
+      }
     }
   }
 }
