@@ -62,6 +62,7 @@ export const migration001InitialSchema = {
       CREATE TABLE IF NOT EXISTS user_settings (
         id INTEGER PRIMARY KEY CHECK (id = 1),
         notifications_enabled INTEGER NOT NULL CHECK (notifications_enabled IN (0, 1)),
+        animations_enabled INTEGER NOT NULL DEFAULT 1 CHECK (animations_enabled IN (0, 1)),
         theme TEXT NOT NULL CHECK (theme IN ('system', 'light', 'dark')),
         accent_color TEXT NOT NULL DEFAULT 'purple' CHECK (accent_color IN ('purple', 'blue', 'green', 'red', 'yellow', 'pink')),
         app_background TEXT NOT NULL DEFAULT 'none' CHECK (app_background IN ('none', 'gradient', 'grid')),

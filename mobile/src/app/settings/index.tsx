@@ -62,6 +62,7 @@ export default function SettingsScreen() {
     isLoading,
     settings,
     setAccentColor,
+    setAnimationsEnabled,
     setAppBackground,
     setDateFormat,
     setLanguage,
@@ -97,6 +98,28 @@ export default function SettingsScreen() {
               <Switch
                 value={settings.notificationsEnabled}
                 onValueChange={(enabled) => void setNotificationsEnabled(enabled)}
+              />
+            </Pressable>
+            <Pressable
+              accessibilityRole="switch"
+              accessibilityState={{ checked: settings.animationsEnabled }}
+              onPress={() => void setAnimationsEnabled(!settings.animationsEnabled)}
+              style={[
+                styles.row,
+                {
+                  borderColor: settings.animationsEnabled ? theme.borderStrong : theme.border,
+                  backgroundColor: settings.animationsEnabled ? theme.accentSoft : theme.surfaceSoft,
+                },
+              ]}>
+              <View>
+                <ThemedText type="smallBold">{t('settings.animations')}</ThemedText>
+                <ThemedText type="small" themeColor="textSecondary">
+                  {t('settings.animationsDetail')}
+                </ThemedText>
+              </View>
+              <Switch
+                value={settings.animationsEnabled}
+                onValueChange={(enabled) => void setAnimationsEnabled(enabled)}
               />
             </Pressable>
           </SectionCard>

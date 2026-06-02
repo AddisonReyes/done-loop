@@ -16,9 +16,11 @@ import { useTranslation } from '@/i18n';
 export function useSettings() {
   const {
     accentColor,
+    animationsEnabled,
     appBackground,
     preference,
     setAccentColorPreference,
+    setAnimationsEnabledPreference,
     setAppBackgroundPreference,
     setThemePreference,
   } = useThemePreference();
@@ -47,6 +49,10 @@ export function useSettings() {
     [language]
   );
 
+  const setAnimationsEnabled = useCallback(async (enabled: boolean) => {
+    await setAnimationsEnabledPreference(enabled);
+  }, [setAnimationsEnabledPreference]);
+
   const setTheme = useCallback(async (theme: UserThemePreference) => {
     await setThemePreference(theme);
   }, [setThemePreference]);
@@ -69,8 +75,9 @@ export function useSettings() {
 
   return {
     isLoading,
-    settings: settings ? { ...settings, accentColor, appBackground, theme: preference, language } : settings,
+    settings: settings ? { ...settings, accentColor, animationsEnabled, appBackground, theme: preference, language } : settings,
     setAccentColor,
+    setAnimationsEnabled,
     setAppBackground,
     setDateFormat,
     setLanguage: setLanguagePreference,

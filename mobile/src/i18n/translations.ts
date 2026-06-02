@@ -137,6 +137,8 @@ export const translations = {
       preferences: 'Preferences',
       notifications: 'Notifications',
       notificationDetail: 'Local reminders for habits and tasks',
+      animations: 'Animations',
+      animationsDetail: 'Smooth motion across screens and actions',
       customization: 'Customization',
       theme: {
         section: 'Theme',
@@ -335,6 +337,8 @@ export const translations = {
       preferences: 'Preferencias',
       notifications: 'Notificaciones',
       notificationDetail: 'Recordatorios locales para hábitos y tareas',
+      animations: 'Animaciones',
+      animationsDetail: 'Movimiento suave entre pantallas y acciones',
       customization: 'Personalización',
       theme: {
         section: 'Tema',

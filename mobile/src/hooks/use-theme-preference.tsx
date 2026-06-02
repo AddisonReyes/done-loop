@@ -5,12 +5,10 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
-import { Animated, useColorScheme as useSystemColorScheme } from 'react-native';
+import { useColorScheme as useSystemColorScheme } from 'react-native';
 
-import { Colors } from '@/constants/theme';
 import { SettingsRepository } from '@/features/settings/repositories/settings-repository';
 import type {
   UserAccentColorPreference,
@@ -24,13 +22,13 @@ type ThemePreferenceContextValue = {
   preference: UserThemePreference;
   accentColor: UserAccentColorPreference;
   appBackground: UserAppBackgroundPreference;
+  animationsEnabled: boolean;
   resolvedTheme: ResolvedTheme;
   isLoadingTheme: boolean;
-  transitionOpacity: Animated.Value;
-  transitionColor: string;
   setThemePreference: (preference: UserThemePreference) => Promise<void>;
   setAccentColorPreference: (accentColor: UserAccentColorPreference) => Promise<void>;
   setAppBackgroundPreference: (appBackground: UserAppBackgroundPreference) => Promise<void>;
+  setAnimationsEnabledPreference: (enabled: boolean) => Promise<void>;
 };
 
 const ThemePreferenceContext = createContext<ThemePreferenceContextValue | null>(null);
@@ -48,11 +46,9 @@ export function ThemePreferenceProvider({ children }: PropsWithChildren) {
   const [preference, setPreference] = useState<UserThemePreference>('system');
   const [accentColor, setAccentColor] = useState<UserAccentColorPreference>('purple');
   const [appBackground, setAppBackground] = useState<UserAppBackgroundPreference>('none');
+  const [animationsEnabled, setAnimationsEnabled] = useState(true);
   const [isLoadingTheme, setIsLoadingTheme] = useState(true);
   const resolvedTheme = resolveTheme(preference, systemTheme);
-  const previousResolvedTheme = useRef<ResolvedTheme>(resolvedTheme);
-  const [transitionOpacity] = useState(() => new Animated.Value(0));
-  const [transitionColor, setTransitionColor] = useState(Colors[resolvedTheme].background);
 
   useEffect(() => {
     let mounted = true;
@@ -64,6 +60,7 @@ export function ThemePreferenceProvider({ children }: PropsWithChildren) {
         setPreference(settings.theme);
         setAccentColor(settings.accentColor);
         setAppBackground(settings.appBackground);
+        setAnimationsEnabled(settings.animationsEnabled);
         setIsLoadingTheme(false);
       }
     };
@@ -74,21 +71,6 @@ export function ThemePreferenceProvider({ children }: PropsWithChildren) {
       mounted = false;
     };
   }, []);
-
-  useEffect(() => {
-    if (previousResolvedTheme.current === resolvedTheme) {
-      return;
-    }
-
-    setTransitionColor(Colors[previousResolvedTheme.current].background);
-    transitionOpacity.setValue(1);
-    Animated.timing(transitionOpacity, {
-      toValue: 0,
-      duration: 280,
-      useNativeDriver: true,
-    }).start();
-    previousResolvedTheme.current = resolvedTheme;
-  }, [resolvedTheme, transitionOpacity]);
 
   const setThemePreference = useCallback(async (nextPreference: UserThemePreference) => {
     const nextSettings = await SettingsRepository.update({ theme: nextPreference });
@@ -105,30 +87,35 @@ export function ThemePreferenceProvider({ children }: PropsWithChildren) {
     setAppBackground(nextSettings.appBackground);
   }, []);
 
+  const setAnimationsEnabledPreference = useCallback(async (nextAnimationsEnabled: boolean) => {
+    const nextSettings = await SettingsRepository.update({ animationsEnabled: nextAnimationsEnabled });
+    setAnimationsEnabled(nextSettings.animationsEnabled);
+  }, []);
+
   const value = useMemo(
     () => ({
       preference,
       accentColor,
       appBackground,
+      animationsEnabled,
       resolvedTheme,
       isLoadingTheme,
-      transitionOpacity,
-      transitionColor,
       setThemePreference,
       setAccentColorPreference,
       setAppBackgroundPreference,
+      setAnimationsEnabledPreference,
     }),
     [
       accentColor,
+      animationsEnabled,
       appBackground,
       isLoadingTheme,
       preference,
       resolvedTheme,
       setAppBackgroundPreference,
+      setAnimationsEnabledPreference,
       setAccentColorPreference,
       setThemePreference,
-      transitionColor,
-      transitionOpacity,
     ]
   );
 

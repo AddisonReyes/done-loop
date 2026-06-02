@@ -15,6 +15,7 @@ import { FloatingCreateButton } from '@/shared/components/floating-create-button
 import { EmptyState } from '@/shared/components/empty-state';
 import { SectionCard } from '@/shared/components/section-card';
 import { ScreenScaffold } from '@/shared/components/screen-scaffold';
+import { AnimatedListItem } from '@/shared/components/animated-list-item';
 
 export default function HabitsScreen() {
   const theme = useTheme();
@@ -109,19 +110,20 @@ export default function HabitsScreen() {
         ) : null}
 
         <View style={styles.list}>
-          {visibleHabits.map((habit) => (
-            <HabitListItem
-              key={habit.id}
-              habit={habit}
-              completedToday={completedHabitIds.has(habit.id)}
-              onToggleToday={() => {
-                void toggleTodayCompletion(habit.id);
-              }}
-              onStartEdit={() => setEditingHabit(habit)}
-              onDelete={() => {
-                void deleteHabit(habit.id);
-              }}
-            />
+          {visibleHabits.map((habit, index) => (
+            <AnimatedListItem key={habit.id} delay={index * 18}>
+              <HabitListItem
+                habit={habit}
+                completedToday={completedHabitIds.has(habit.id)}
+                onToggleToday={() => {
+                  void toggleTodayCompletion(habit.id);
+                }}
+                onStartEdit={() => setEditingHabit(habit)}
+                onDelete={() => {
+                  void deleteHabit(habit.id);
+                }}
+              />
+            </AnimatedListItem>
           ))}
         </View>
       </ScreenScaffold>

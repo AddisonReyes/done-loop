@@ -6,6 +6,7 @@ export type UserDateFormatPreference = 'iso' | 'mdy' | 'dmy' | 'long';
 
 export type UserSettings = {
   notificationsEnabled: boolean;
+  animationsEnabled: boolean;
   theme: UserThemePreference;
   accentColor: UserAccentColorPreference;
   appBackground: UserAppBackgroundPreference;

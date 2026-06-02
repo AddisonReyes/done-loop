@@ -1,10 +1,12 @@
 import { PropsWithChildren } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, { FadeIn, SlideInDown } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useThemePreference } from '@/hooks/use-theme-preference';
 
 type AppModalProps = PropsWithChildren<{
   title: string;
@@ -14,15 +16,19 @@ type AppModalProps = PropsWithChildren<{
 
 export function AppModal({ children, onClose, title, visible }: AppModalProps) {
   const theme = useTheme();
+  const { animationsEnabled } = useThemePreference();
   const insets = useSafeAreaInsets();
 
   return (
-    <Modal animationType="fade" transparent visible={visible} onRequestClose={onClose}>
+    <Modal animationType={animationsEnabled ? 'fade' : 'none'} transparent visible={visible} onRequestClose={onClose}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.root}>
-        <Pressable accessibilityRole="button" style={styles.backdrop} onPress={onClose} />
-        <View
+        <Animated.View entering={animationsEnabled ? FadeIn.duration(160) : undefined} style={styles.backdrop}>
+          <Pressable accessibilityRole="button" style={styles.backdropPressable} onPress={onClose} />
+        </Animated.View>
+        <Animated.View
+          entering={animationsEnabled ? SlideInDown.duration(220) : undefined}
           style={[
             styles.sheet,
             {
@@ -41,7 +47,7 @@ export function AppModal({ children, onClose, title, visible }: AppModalProps) {
             </Pressable>
           </View>
           {children}
-        </View>
+        </Animated.View>
       </KeyboardAvoidingView>
     </Modal>
   );
@@ -55,6 +61,9 @@ const styles = StyleSheet.create({
   backdrop: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.52)',
+  },
+  backdropPressable: {
+    ...StyleSheet.absoluteFillObject,
   },
   sheet: {
     borderTopLeftRadius: 28,

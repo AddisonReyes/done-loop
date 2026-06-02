@@ -14,6 +14,7 @@ import { EmptyState } from '@/shared/components/empty-state';
 import { ScreenScaffold } from '@/shared/components/screen-scaffold';
 import { SectionCard } from '@/shared/components/section-card';
 import { SegmentedControl } from '@/shared/components/segmented-control';
+import { AnimatedListItem } from '@/shared/components/animated-list-item';
 import { formatDateKey, isDateKey } from '@/shared/utils/date';
 
 const sorts: { value: TodoSort; labelKey: string }[] = [
@@ -68,32 +69,34 @@ export default function TodosScreen() {
                 <ThemedText type="smallBold" themeColor="accent">
                   {isDateKey(dateKey) ? formatDateKey(dateKey, locale, todos.dateFormat) : dateKey}
                 </ThemedText>
-                {groupedTodos.map((todo) => (
-                  <TodoListItem
-                    key={todo.id}
-                    todo={todo}
-                    dateLabel={todos.getTodoDateLabel(todo)}
-                    onComplete={() => void todos.completeTodo(todo)}
-                    onReopen={() => void todos.reopenTodo(todo)}
-                    onDelete={() => void todos.deleteTodo(todo)}
-                    onStartEdit={() => setEditingTodo(todo)}
-                  />
+                {groupedTodos.map((todo, index) => (
+                  <AnimatedListItem key={todo.id} delay={index * 18}>
+                    <TodoListItem
+                      todo={todo}
+                      dateLabel={todos.getTodoDateLabel(todo)}
+                      onComplete={() => void todos.completeTodo(todo)}
+                      onReopen={() => void todos.reopenTodo(todo)}
+                      onDelete={() => void todos.deleteTodo(todo)}
+                      onStartEdit={() => setEditingTodo(todo)}
+                    />
+                  </AnimatedListItem>
                 ))}
               </View>
             ))}
           </View>
         ) : (
           <View style={styles.list}>
-            {todos.sortedTodos.map((todo) => (
-              <TodoListItem
-                key={todo.id}
-                todo={todo}
-                dateLabel={todos.getTodoDateLabel(todo)}
-                onComplete={() => void todos.completeTodo(todo)}
-                onReopen={() => void todos.reopenTodo(todo)}
-                onDelete={() => void todos.deleteTodo(todo)}
-                onStartEdit={() => setEditingTodo(todo)}
-              />
+            {todos.sortedTodos.map((todo, index) => (
+              <AnimatedListItem key={todo.id} delay={index * 18}>
+                <TodoListItem
+                  todo={todo}
+                  dateLabel={todos.getTodoDateLabel(todo)}
+                  onComplete={() => void todos.completeTodo(todo)}
+                  onReopen={() => void todos.reopenTodo(todo)}
+                  onDelete={() => void todos.deleteTodo(todo)}
+                  onStartEdit={() => setEditingTodo(todo)}
+                />
+              </AnimatedListItem>
             ))}
           </View>
         )}

@@ -36,6 +36,7 @@ jest.mock('../repositories/settings-repository', () => ({
 }));
 
 const enabledSettings: UserSettings = {
+  animationsEnabled: true,
   accentColor: 'purple',
   appBackground: 'none',
   dateFormat: 'dmy',

@@ -1,8 +1,11 @@
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useThemePreference } from '@/hooks/use-theme-preference';
 
 type SegmentOption<T extends string> = {
   label: string;
@@ -17,9 +20,60 @@ type SegmentedControlProps<T extends string> = {
 
 export function SegmentedControl<T extends string>({ options, onChange, value }: SegmentedControlProps<T>) {
   const theme = useTheme();
+  const { animationsEnabled } = useThemePreference();
+  const [containerWidth, setContainerWidth] = useState(0);
+  const hasOptions = options.length > 0;
+  const selectedIndex = Math.max(options.findIndex((option) => option.value === value), 0);
+  const optionWidth = containerWidth > 0 && hasOptions ? (containerWidth - Spacing.half * 2) / options.length : 0;
+  const indicatorX = useSharedValue(selectedIndex * optionWidth);
+  const indicatorAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: indicatorX.value }],
+    width: optionWidth,
+  }));
+
+  useEffect(() => {
+    const nextX = selectedIndex * optionWidth;
+
+    if (!animationsEnabled) {
+      indicatorX.value = nextX;
+      return;
+    }
+
+    indicatorX.value = withTiming(nextX, {
+      duration: 180,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [animationsEnabled, indicatorX, optionWidth, selectedIndex]);
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.backgroundSelected, borderColor: theme.border }]}>
+    <View
+      testID="segmented-control"
+      onLayout={(event) => setContainerWidth(event.nativeEvent.layout.width)}
+      style={[styles.container, { backgroundColor: theme.backgroundSelected, borderColor: theme.border }]}>
+      {containerWidth > 0 && hasOptions ? (
+        animationsEnabled ? (
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.indicator,
+              { backgroundColor: theme.backgroundElement },
+              indicatorAnimatedStyle,
+            ]}
+          />
+        ) : (
+          <View
+            pointerEvents="none"
+            style={[
+              styles.indicator,
+              {
+                backgroundColor: theme.backgroundElement,
+                transform: [{ translateX: selectedIndex * optionWidth }],
+                width: optionWidth,
+              },
+            ]}
+          />
+        )
+      ) : null}
       {options.map((option) => {
         const selected = option.value === value;
 
@@ -29,7 +83,7 @@ export function SegmentedControl<T extends string>({ options, onChange, value }:
             accessibilityRole="button"
             accessibilityState={{ selected }}
             onPress={() => onChange(option.value)}
-            style={[styles.option, selected && { backgroundColor: theme.backgroundElement }]}>
+            style={styles.option}>
             <ThemedText type="smallBold" themeColor={selected ? 'accentStrong' : 'textSecondary'}>
               {option.label}
             </ThemedText>
@@ -46,6 +100,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     flexDirection: 'row',
     padding: Spacing.half,
+    position: 'relative',
+  },
+  indicator: {
+    borderRadius: 13,
+    bottom: Spacing.half,
+    left: Spacing.half,
+    position: 'absolute',
+    top: Spacing.half,
   },
   option: {
     alignItems: 'center',
@@ -54,5 +116,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: 40,
     paddingHorizontal: Spacing.two,
+    zIndex: 1,
   },
 });

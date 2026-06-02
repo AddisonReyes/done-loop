@@ -1,10 +1,13 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { ComponentProps } from 'react';
+import { useEffect } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useThemePreference } from '@/hooks/use-theme-preference';
 import { useTranslation } from '@/i18n';
 import type { Todo } from '@/features/todos/types';
 
@@ -32,18 +35,36 @@ export function TodoListItem({
   onStartEdit,
 }: TodoListItemProps) {
   const theme = useTheme();
+  const { animationsEnabled } = useThemePreference();
   const { t } = useTranslation();
   const completed = todo.status === 'completed';
   const statusLabel = completed ? t('todos.status.completed') : t('todos.status.pending');
+  const cardScale = useSharedValue(1);
+  const cardAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: cardScale.value }],
+  }));
+
+  useEffect(() => {
+    if (!animationsEnabled) {
+      cardScale.value = 1;
+      return;
+    }
+
+    cardScale.value = withSequence(
+      withTiming(0.985, { duration: 80 }),
+      withSpring(1, { damping: 16, stiffness: 220 })
+    );
+  }, [animationsEnabled, cardScale, completed]);
 
   return (
-    <View
+    <Animated.View
       style={[
         styles.container,
         {
           borderColor: completed ? theme.borderStrong : theme.border,
           backgroundColor: completed ? theme.accentSoft : theme.backgroundElement,
         },
+        animationsEnabled && cardAnimatedStyle,
       ]}>
       <View style={styles.header}>
         <ThemedText type="smallBold" style={[styles.title, completed && styles.completedText]}>
@@ -70,7 +91,7 @@ export function TodoListItem({
         <DetailRow label={t('todos.detail.date')} value={dateLabel} />
         <DetailRow label={t('todos.detail.status')} value={statusLabel} />
       </View>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -88,24 +109,43 @@ function IconAction({
   onPress: () => void;
 }) {
   const theme = useTheme();
+  const { animationsEnabled } = useThemePreference();
+  const buttonScale = useSharedValue(1);
+  const buttonAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: buttonScale.value }],
+  }));
+  const setPressed = (pressed: boolean) => {
+    if (!animationsEnabled) {
+      buttonScale.value = 1;
+      return;
+    }
+
+    buttonScale.value = withTiming(pressed ? 0.96 : 1, { duration: 100 });
+  };
+
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
+      onPressIn={() => setPressed(true)}
+      onPressOut={() => setPressed(false)}
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.iconButton,
-        {
-          backgroundColor: muted ? theme.backgroundSelected : theme.accentSoft,
-          borderColor: muted ? theme.border : theme.borderStrong,
-        },
-        pressed && styles.pressed,
-      ]}>
-      <MaterialCommunityIcons
-        name={iconName}
-        size={20}
-        color={muted ? theme.textSecondary : theme.accentStrong}
-      />
+      style={({ pressed }) => [pressed && styles.pressed]}>
+      <Animated.View
+        style={[
+          styles.iconButton,
+          {
+            backgroundColor: muted ? theme.backgroundSelected : theme.accentSoft,
+            borderColor: muted ? theme.border : theme.borderStrong,
+          },
+          animationsEnabled && buttonAnimatedStyle,
+        ]}>
+        <MaterialCommunityIcons
+          name={iconName}
+          size={20}
+          color={muted ? theme.textSecondary : theme.accentStrong}
+        />
+      </Animated.View>
     </Pressable>
   );
 }

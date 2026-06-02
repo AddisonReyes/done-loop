@@ -23,6 +23,7 @@ const settingsListeners = new Set<(settings: UserSettings) => void>();
 
 type UserSettingsRow = {
   notifications_enabled: number;
+  animations_enabled: number;
   theme: UserThemePreference;
   accent_color: UserAccentColorPreference;
   app_background: UserAppBackgroundPreference;
@@ -34,6 +35,7 @@ type UserSettingsRow = {
 
 const defaultSettings: UserSettings = {
   notificationsEnabled: false,
+  animationsEnabled: true,
   theme: 'system',
   accentColor: 'purple',
   appBackground: 'none',
@@ -46,6 +48,7 @@ const defaultSettings: UserSettings = {
 function mapUserSettingsRow(row: UserSettingsRow): UserSettings {
   return {
     notificationsEnabled: fromSQLiteBoolean(row.notifications_enabled),
+    animationsEnabled: fromSQLiteBoolean(row.animations_enabled),
     theme: row.theme,
     accentColor: row.accent_color,
     appBackground: row.app_background,
@@ -67,7 +70,7 @@ export const SettingsRepository = {
   async get(): Promise<UserSettings> {
     const database = await getDatabaseAsync();
     const row = await database.getFirstAsync<UserSettingsRow>(
-      `SELECT notifications_enabled, theme, accent_color, app_background, language, date_format, privacy_policy_url, terms_url
+      `SELECT notifications_enabled, animations_enabled, theme, accent_color, app_background, language, date_format, privacy_policy_url, terms_url
        FROM user_settings
        WHERE id = 1;`
     );
@@ -82,7 +85,7 @@ export const SettingsRepository = {
   async update(input: UpdateUserSettingsInput): Promise<UserSettings> {
     const database = await getDatabaseAsync();
     const existingRow = await database.getFirstAsync<UserSettingsRow>(
-      `SELECT notifications_enabled, theme, accent_color, app_background, language, date_format, privacy_policy_url, terms_url
+      `SELECT notifications_enabled, animations_enabled, theme, accent_color, app_background, language, date_format, privacy_policy_url, terms_url
        FROM user_settings
        WHERE id = 1;`
     );
@@ -97,6 +100,7 @@ export const SettingsRepository = {
       `INSERT INTO user_settings (
         id,
         notifications_enabled,
+        animations_enabled,
         theme,
         accent_color,
         app_background,
@@ -107,9 +111,10 @@ export const SettingsRepository = {
         terms_url,
         created_at,
         updated_at
-      ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         notifications_enabled = excluded.notifications_enabled,
+        animations_enabled = excluded.animations_enabled,
         theme = excluded.theme,
         accent_color = excluded.accent_color,
         app_background = excluded.app_background,
@@ -120,6 +125,7 @@ export const SettingsRepository = {
         terms_url = excluded.terms_url,
         updated_at = excluded.updated_at;`,
       toSQLiteBoolean(next.notificationsEnabled),
+      toSQLiteBoolean(next.animationsEnabled),
       next.theme,
       next.accentColor,
       next.appBackground,

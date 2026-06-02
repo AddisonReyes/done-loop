@@ -1,7 +1,6 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { useEffect } from 'react';
-import { Animated, StyleSheet } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { NotificationService } from '@/features/notifications/services/notification-service';
@@ -23,7 +22,7 @@ export default function TabLayout() {
 }
 
 function ThemedNavigation() {
-  const { resolvedTheme, transitionColor, transitionOpacity } = useThemePreference();
+  const { animationsEnabled, isLoadingTheme, resolvedTheme } = useThemePreference();
   const [fontsLoaded] = useFonts({
     'Fraunces-Bold': require('@/assets/fonts/Fraunces-Bold.ttf'),
     'Fraunces-Medium': require('@/assets/fonts/Fraunces-Medium.ttf'),
@@ -37,22 +36,8 @@ function ThemedNavigation() {
 
   return (
     <ThemeProvider value={resolvedTheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
+      {!isLoadingTheme && animationsEnabled ? <AnimatedSplashOverlay animationsEnabled={animationsEnabled} /> : null}
       {fontsLoaded ? <AppTabs /> : null}
-      <Animated.View
-        pointerEvents="none"
-        style={[
-          styles.transitionOverlay,
-          { backgroundColor: transitionColor, opacity: transitionOpacity },
-        ]}
-      />
     </ThemeProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  transitionOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 100,
-  },
-});
