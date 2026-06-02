@@ -63,7 +63,10 @@ function HabitEditorForm({ habit, onSubmit }: Pick<HabitEditorModalProps, 'habit
   const disabled = draft.name.trim().length === 0;
 
   return (
-    <ScrollView contentContainerStyle={styles.content}>
+    <ScrollView
+      keyboardShouldPersistTaps="handled"
+      style={styles.scrollView}
+      contentContainerStyle={styles.content}>
         <LimitedTextInput
           accessibilityLabel={t('habits.formLabel')}
           placeholder={t('habits.formPlaceholder')}
@@ -203,8 +206,12 @@ function LimitedTextInput({
 }
 
 const styles = StyleSheet.create({
+  scrollView: {
+    flexShrink: 1,
+  },
   content: {
     gap: Spacing.two,
+    paddingBottom: Spacing.two,
   },
   inputGroup: {
     gap: Spacing.one,

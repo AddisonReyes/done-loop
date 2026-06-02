@@ -28,6 +28,7 @@ export function TimePickerField({ label, onChange, value }: TimePickerFieldProps
   const theme = useTheme();
   const { t } = useTranslation();
   const [showPicker, setShowPicker] = useState(false);
+  const displayValue = value ?? t('common.none');
 
   const handleChange = (_event: DateTimePickerEvent, date?: Date) => {
     if (Platform.OS !== 'ios') {
@@ -43,16 +44,21 @@ export function TimePickerField({ label, onChange, value }: TimePickerFieldProps
       <ThemedText type="smallBold">{label}</ThemedText>
       <View style={styles.row}>
         <Pressable
+          accessibilityLabel={`${label}: ${displayValue}`}
           accessibilityRole="button"
           onPress={() => setShowPicker(true)}
           style={[
             styles.button,
             { backgroundColor: theme.surfaceStrong, borderColor: theme.border },
           ]}>
-          <ThemedText type="small">{value ?? t('common.none')}</ThemedText>
+          <ThemedText type="small">{displayValue}</ThemedText>
         </Pressable>
         {value ? (
-          <Pressable accessibilityRole="button" onPress={() => onChange(undefined)} style={styles.clearButton}>
+          <Pressable
+            accessibilityLabel={`${t('common.clear')} ${label}`}
+            accessibilityRole="button"
+            onPress={() => onChange(undefined)}
+            style={styles.clearButton}>
             <ThemedText type="smallBold" themeColor="textSecondary">
               {t('common.clear')}
             </ThemedText>

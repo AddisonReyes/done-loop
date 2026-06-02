@@ -18,6 +18,7 @@ type AppBackgroundProps = AppBackgroundSnapshot & {
 export function AppBackground({ accent, background, preference, resolvedTheme, style }: AppBackgroundProps) {
   const { height, width } = useWindowDimensions();
   const gridLineColor = resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.075)' : 'rgba(0, 0, 0, 0.075)';
+  const solarLineColor = resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.105)' : 'rgba(0, 0, 0, 0.105)';
 
   if (preference === 'gradient') {
     return (
@@ -63,6 +64,40 @@ export function AppBackground({ accent, background, preference, resolvedTheme, s
     );
   }
 
+  if (preference === 'solar') {
+    const maxSolarDiameter = Math.ceil(Math.sqrt(width ** 2 + height ** 2) * 2);
+    const solarRings = Array.from(
+      { length: Math.ceil((maxSolarDiameter - SolarInitialRingSize) / SolarRingSpacing) + 1 },
+      (_, index) => SolarInitialRingSize + index * SolarRingSpacing
+    );
+
+    return (
+      <View pointerEvents="none" style={[styles.backgroundLayer, { backgroundColor: background }, style]}>
+        <CircularGlow
+          color={accent}
+          opacity={resolvedTheme === 'dark' ? 0.23 : 0.17}
+          style={styles.solarGlow}
+        />
+        {solarRings.map((size) => (
+          <View
+            key={size}
+            style={[
+              styles.solarRing,
+              {
+                borderColor: solarLineColor,
+                borderRadius: size / 2,
+                height: size,
+                right: SolarCenterRight - size / 2,
+                top: SolarCenterTop - size / 2,
+                width: size,
+              },
+            ]}
+          />
+        ))}
+      </View>
+    );
+  }
+
   return <View pointerEvents="none" style={[styles.backgroundLayer, { backgroundColor: background }, style]} />;
 }
 
@@ -100,6 +135,10 @@ function CircularGlow({
 const GridSize = 32;
 const GlowSize = 520;
 const GlowRingCount = 32;
+const SolarCenterRight = 0;
+const SolarCenterTop = 0;
+const SolarInitialRingSize = 128;
+const SolarRingSpacing = 42;
 const GlowRings = Array.from({ length: GlowRingCount }, (_, index) => {
   const progress = index / (GlowRingCount - 1);
 
@@ -149,5 +188,13 @@ const styles = StyleSheet.create({
   bottomLeftGlow: {
     bottom: -230,
     left: -240,
+  },
+  solarGlow: {
+    right: -GlowSize / 2,
+    top: -GlowSize / 2,
+  },
+  solarRing: {
+    position: 'absolute',
+    borderWidth: StyleSheet.hairlineWidth,
   },
 });

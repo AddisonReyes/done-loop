@@ -65,7 +65,7 @@ export const migration001InitialSchema = {
         animations_enabled INTEGER NOT NULL DEFAULT 1 CHECK (animations_enabled IN (0, 1)),
         theme TEXT NOT NULL CHECK (theme IN ('system', 'light', 'dark')),
         accent_color TEXT NOT NULL DEFAULT 'purple' CHECK (accent_color IN ('purple', 'blue', 'green', 'red', 'yellow', 'pink')),
-        app_background TEXT NOT NULL DEFAULT 'none' CHECK (app_background IN ('none', 'gradient', 'grid')),
+        app_background TEXT NOT NULL DEFAULT 'none' CHECK (app_background IN ('none', 'gradient', 'grid', 'solar')),
         language TEXT NOT NULL DEFAULT 'en' CHECK (language IN ('en', 'es')),
         date_format TEXT NOT NULL DEFAULT 'dmy' CHECK (date_format IN ('iso', 'mdy', 'dmy', 'long')),
         plan TEXT NOT NULL DEFAULT 'free' CHECK (plan IN ('free')),

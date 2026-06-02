@@ -95,13 +95,18 @@ describe('HabitRepository', () => {
     expect(database.runAsync).not.toHaveBeenCalled();
   });
 
-  it('deletes habits by id', async () => {
+  it('soft deletes habits by id', async () => {
     const database = {
       runAsync: jest.fn(async () => ({ changes: 1, lastInsertRowId: 1 })),
     };
     mockedGetDatabaseAsync.mockResolvedValue(database as never);
 
     await expect(HabitRepository.deleteById('habit_1')).resolves.toBe(true);
-    expect(database.runAsync).toHaveBeenCalledWith('DELETE FROM habits WHERE id = ?;', 'habit_1');
+    expect(database.runAsync).toHaveBeenCalledWith(
+      expect.stringContaining('SET is_active = 0'),
+      expect.any(String),
+      expect.any(String),
+      'habit_1'
+    );
   });
 });

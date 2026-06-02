@@ -1,5 +1,6 @@
 import Constants, { AppOwnership } from 'expo-constants';
 import { router } from 'expo-router';
+import { AppState } from 'react-native';
 
 import { HabitCompletionRepository, HabitRepository } from '@/features/habits/repositories';
 import { getHabitsDueOnDate } from '@/features/habits/services/habit-recurrence';
@@ -34,6 +35,7 @@ const habitReminderLookaheadDays = 370;
 let notificationsModuleLoader: NotificationsModuleLoader = () => import('expo-notifications');
 let notificationsModulePromise: Promise<NotificationsModule | null> | null = null;
 let notificationResponseSubscription: { remove: () => void } | null = null;
+let appStateSubscription: { remove: () => void } | null = null;
 
 async function getNotificationsModuleAsync(): Promise<NotificationsModule | null> {
   if (Constants.appOwnership === AppOwnership.Expo) {
@@ -126,10 +128,24 @@ function getHabitNotificationData(habitId: string, language: UserLanguagePrefere
   };
 }
 
+function getTodoNotificationData(language: UserLanguagePreference) {
+  return {
+    type: 'todo_reminder',
+    language,
+  };
+}
+
 function getHabitIdFromResponse(response: Parameters<NotificationsModule['addNotificationResponseReceivedListener']>[0] extends (value: infer Response) => unknown ? Response : never): string | null {
   const data = response.notification.request.content.data;
   const habitId = data?.habitId;
   return typeof habitId === 'string' ? habitId : null;
+}
+
+function getNotificationTypeFromResponse(
+  response: Parameters<NotificationsModule['addNotificationResponseReceivedListener']>[0] extends (value: infer Response) => unknown ? Response : never
+): string | null {
+  const type = response.notification.request.content.data?.type;
+  return typeof type === 'string' ? type : null;
 }
 
 function getLanguageFromResponse(
@@ -144,7 +160,7 @@ async function dismissNotificationAsync(
   notificationId: string
 ): Promise<void> {
   if ('dismissNotificationAsync' in notifications) {
-    await notifications.dismissNotificationAsync(notificationId);
+    await Promise.resolve(notifications.dismissNotificationAsync(notificationId)).catch(() => undefined);
   }
 }
 
@@ -232,9 +248,15 @@ export const NotificationService = {
     }
 
     notificationResponseSubscription = notifications.addNotificationResponseReceivedListener((response) => {
+      const type = getNotificationTypeFromResponse(response);
       const habitId = getHabitIdFromResponse(response);
       const notificationId = response.notification.request.identifier;
       const language = getLanguageFromResponse(response);
+
+      if (type === 'todo_reminder') {
+        router.navigate('/todos');
+        return;
+      }
 
       if (!habitId) {
         return;
@@ -254,6 +276,18 @@ export const NotificationService = {
     });
 
     return true;
+  },
+
+  configureAppStateSync(syncReminders: () => void): void {
+    if (appStateSubscription) {
+      return;
+    }
+
+    appStateSubscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        syncReminders();
+      }
+    });
   },
 
   async requestPermissionsAsync(): Promise<boolean> {
@@ -356,6 +390,7 @@ export const NotificationService = {
       content: {
         title: translations[language].notifications.todoTitle,
         body: title,
+        data: getTodoNotificationData(language),
       },
       trigger: {
         type: notifications.SchedulableTriggerInputTypes.DATE,
@@ -371,6 +406,7 @@ export const NotificationService = {
     }
 
     await notifications.cancelScheduledNotificationAsync(notificationId);
+    await dismissNotificationAsync(notifications, notificationId);
   },
 
   async cancelAllAsync(): Promise<void> {
@@ -391,4 +427,8 @@ export function setNotificationModuleLoaderForTests(loader: NotificationsModuleL
 export function resetNotificationModuleLoaderForTests(): void {
   notificationsModuleLoader = () => import('expo-notifications');
   notificationsModulePromise = null;
+  notificationResponseSubscription?.remove();
+  notificationResponseSubscription = null;
+  appStateSubscription?.remove();
+  appStateSubscription = null;
 }

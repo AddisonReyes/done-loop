@@ -12,6 +12,9 @@ export async function getDatabaseAsync(): Promise<SQLiteDatabase> {
       await database.execAsync('PRAGMA foreign_keys = ON;');
       await runMigrationsAsync(database);
       return database;
+    }).catch((error: unknown) => {
+      databasePromise = null;
+      throw error;
     });
   }
 

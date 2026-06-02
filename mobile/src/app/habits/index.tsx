@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { HabitEditorModal } from '@/features/habits/components/habit-editor-modal';
@@ -16,6 +16,8 @@ import { EmptyState } from '@/shared/components/empty-state';
 import { SectionCard } from '@/shared/components/section-card';
 import { ScreenScaffold } from '@/shared/components/screen-scaffold';
 import { AnimatedListItem } from '@/shared/components/animated-list-item';
+
+const animatedListItemLimit = 24;
 
 export default function HabitsScreen() {
   const theme = useTheme();
@@ -41,6 +43,19 @@ export default function HabitsScreen() {
     habits,
     updateHabitFromDraft,
   } = useHabits();
+
+  const confirmDeleteHabit = (habit: Habit) => {
+    Alert.alert(t('habits.delete'), habit.name, [
+      { text: t('habits.cancel'), style: 'cancel' },
+      {
+        text: t('habits.delete'),
+        style: 'destructive',
+        onPress: () => {
+          void deleteHabit(habit.id);
+        },
+      },
+    ]);
+  };
 
   return (
     <View style={styles.screen}>
@@ -111,7 +126,7 @@ export default function HabitsScreen() {
 
         <View style={styles.list}>
           {visibleHabits.map((habit, index) => (
-            <AnimatedListItem key={habit.id} delay={index * 18}>
+            <AnimatedListItem key={habit.id} animate={index < animatedListItemLimit} delay={index * 18}>
               <HabitListItem
                 habit={habit}
                 completedToday={completedHabitIds.has(habit.id)}
@@ -119,9 +134,7 @@ export default function HabitsScreen() {
                   void toggleTodayCompletion(habit.id);
                 }}
                 onStartEdit={() => setEditingHabit(habit)}
-                onDelete={() => {
-                  void deleteHabit(habit.id);
-                }}
+                onDelete={() => confirmDeleteHabit(habit)}
               />
             </AnimatedListItem>
           ))}

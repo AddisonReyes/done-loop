@@ -8,6 +8,7 @@ import { migration005AddAccentColorSetting } from '@/storage/migrations/migratio
 import { migration006AddHabitNotificationId } from '@/storage/migrations/migration-006-add-habit-notification-id';
 import { migration007AddAppBackgroundSetting } from '@/storage/migrations/migration-007-add-app-background-setting';
 import { migration008AddAnimationsEnabledSetting } from '@/storage/migrations/migration-008-add-animations-enabled-setting';
+import { migration009AddSolarAppBackground } from '@/storage/migrations/migration-009-add-solar-app-background';
 
 type Migration = {
   id: number;
@@ -24,6 +25,7 @@ const migrations: Migration[] = [
   migration006AddHabitNotificationId,
   migration007AddAppBackgroundSetting,
   migration008AddAnimationsEnabledSetting,
+  migration009AddSolarAppBackground,
 ];
 
 export async function runMigrationsAsync(database: SQLiteDatabase): Promise<void> {

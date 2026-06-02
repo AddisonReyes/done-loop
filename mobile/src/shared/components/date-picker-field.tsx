@@ -36,6 +36,7 @@ export function DatePickerField({ dateFormat, label, onChange, value }: DatePick
       <ThemedText type="smallBold">{label}</ThemedText>
       <View style={styles.row}>
         <Pressable
+          accessibilityLabel={`${label}: ${displayValue}`}
           accessibilityRole="button"
           onPress={() => setShowPicker(true)}
           style={[
@@ -45,7 +46,11 @@ export function DatePickerField({ dateFormat, label, onChange, value }: DatePick
           <ThemedText type="small">{displayValue}</ThemedText>
         </Pressable>
         {value ? (
-          <Pressable accessibilityRole="button" onPress={() => onChange(undefined)} style={styles.clearButton}>
+          <Pressable
+            accessibilityLabel={`${t('common.clear')} ${label}`}
+            accessibilityRole="button"
+            onPress={() => onChange(undefined)}
+            style={styles.clearButton}>
             <ThemedText type="smallBold" themeColor="textSecondary">
               {t('common.clear')}
             </ThemedText>

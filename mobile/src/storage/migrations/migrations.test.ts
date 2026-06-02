@@ -7,6 +7,7 @@ import { migration005AddAccentColorSetting } from './migration-005-add-accent-co
 import { migration006AddHabitNotificationId } from './migration-006-add-habit-notification-id';
 import { migration007AddAppBackgroundSetting } from './migration-007-add-app-background-setting';
 import { migration008AddAnimationsEnabledSetting } from './migration-008-add-animations-enabled-setting';
+import { migration009AddSolarAppBackground } from './migration-009-add-solar-app-background';
 
 function createMigrationDatabase(appliedIds: number[] = []) {
   const rows = appliedIds.map((id) => ({ id }));
@@ -42,7 +43,7 @@ describe('migrations', () => {
 
     await runMigrationsAsync(database as unknown as SQLiteDatabase);
 
-    expect(database.withTransactionAsync).toHaveBeenCalledTimes(8);
+    expect(database.withTransactionAsync).toHaveBeenCalledTimes(9);
     expect(database.runAsync).toHaveBeenCalledWith(
       'INSERT INTO schema_migrations (id, name, applied_at) VALUES (?, ?, ?);',
       1,
@@ -52,7 +53,7 @@ describe('migrations', () => {
   });
 
   it('skips migrations that are already applied', async () => {
-    const database = createMigrationDatabase([1, 2, 3, 4, 5, 6, 7, 8]);
+    const database = createMigrationDatabase([1, 2, 3, 4, 5, 6, 7, 8, 9]);
 
     await runMigrationsAsync(database as unknown as SQLiteDatabase);
 
@@ -85,5 +86,13 @@ describe('migrations', () => {
     await migration008AddAnimationsEnabledSetting.up(database as unknown as SQLiteDatabase);
 
     expect(database.execAsync).toHaveBeenCalledWith(expect.stringContaining('ADD COLUMN animations_enabled'));
+  });
+
+  it('rebuilds user settings to allow the solar app background', async () => {
+    const database = createTableInfoDatabase([]);
+
+    await migration009AddSolarAppBackground.up(database as unknown as SQLiteDatabase);
+
+    expect(database.execAsync).toHaveBeenCalledWith(expect.stringContaining("'none', 'gradient', 'grid', 'solar'"));
   });
 });

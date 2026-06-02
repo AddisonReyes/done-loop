@@ -19,7 +19,14 @@ describe('HabitCompletionRepository', () => {
 
   it('inserts a new completion when no habit/date row exists', async () => {
     const database = {
-      getFirstAsync: jest.fn(async () => null),
+      getFirstAsync: jest.fn(async () => ({
+        id: 'habit_completion_test',
+        habit_id: 'habit_1',
+        date: '2026-05-31',
+        completed: 1,
+        created_at: '2026-05-31T00:00:00.000Z',
+        updated_at: '2026-05-31T00:00:00.000Z',
+      })),
       runAsync: jest.fn(async () => ({ changes: 1, lastInsertRowId: 1 })),
     };
     mockedGetDatabaseAsync.mockResolvedValue(database as never);
@@ -53,9 +60,9 @@ describe('HabitCompletionRepository', () => {
         id: 'completion_1',
         habit_id: 'habit_1',
         date: '2026-05-31',
-        completed: 1,
+        completed: 0,
         created_at: '2026-05-31T00:00:00.000Z',
-        updated_at: '2026-05-31T00:00:00.000Z',
+        updated_at: '2026-05-31T01:00:00.000Z',
       })),
       runAsync: jest.fn(async () => ({ changes: 1, lastInsertRowId: 1 })),
     };
@@ -69,10 +76,13 @@ describe('HabitCompletionRepository', () => {
       })
     ).resolves.toMatchObject({ id: 'completion_1', completed: false });
     expect(database.runAsync).toHaveBeenCalledWith(
-      expect.stringContaining('UPDATE habit_completions'),
+      expect.stringContaining('ON CONFLICT(habit_id, date) DO UPDATE'),
+      'habit_completion_test',
+      'habit_1',
+      '2026-05-31',
       0,
       expect.any(String),
-      'completion_1'
+      expect.any(String)
     );
   });
 
@@ -104,4 +114,3 @@ describe('HabitCompletionRepository', () => {
     );
   });
 });
-

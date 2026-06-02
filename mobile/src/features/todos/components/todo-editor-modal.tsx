@@ -51,7 +51,10 @@ function TodoEditorForm({
   const disabled = title.trim().length === 0;
 
   return (
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}>
         <LimitedTextInput
           accessibilityLabel={t('todos.form.titleLabel')}
           placeholder={t('todos.form.titlePlaceholder')}
@@ -168,8 +171,12 @@ function LimitedTextInput({
 }
 
 const styles = StyleSheet.create({
+  scrollView: {
+    flexShrink: 1,
+  },
   content: {
     gap: Spacing.two,
+    paddingBottom: Spacing.two,
   },
   inputGroup: {
     gap: Spacing.one,

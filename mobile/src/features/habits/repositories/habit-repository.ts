@@ -159,7 +159,15 @@ export const HabitRepository = {
 
   async deleteById(id: string): Promise<boolean> {
     const database = await getDatabaseAsync();
-    const result = await database.runAsync('DELETE FROM habits WHERE id = ?;', id);
+    const now = new Date().toISOString();
+    const result = await database.runAsync(
+      `UPDATE habits
+       SET is_active = 0, deleted_at = ?, updated_at = ?
+       WHERE id = ?;`,
+      now,
+      now,
+      id
+    );
     return result.changes > 0;
   },
 };

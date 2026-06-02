@@ -213,7 +213,6 @@ export function useHabits() {
     async (habitId: string) => {
       try {
         setErrorMessage(null);
-        await HabitCompletionRepository.deleteByHabitId(habitId);
         await NotificationService.cancelAsync(habits.find((habit) => habit.id === habitId)?.notificationId);
         await HabitRepository.deleteById(habitId);
         await loadHabits({ silent: true });

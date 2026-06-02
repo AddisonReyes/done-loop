@@ -1,7 +1,7 @@
 import { PropsWithChildren } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { FadeIn, SlideInDown } from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
@@ -28,7 +28,6 @@ export function AppModal({ children, onClose, title, visible }: AppModalProps) {
           <Pressable accessibilityRole="button" style={styles.backdropPressable} onPress={onClose} />
         </Animated.View>
         <Animated.View
-          entering={animationsEnabled ? SlideInDown.duration(220) : undefined}
           style={[
             styles.sheet,
             {
@@ -46,7 +45,7 @@ export function AppModal({ children, onClose, title, visible }: AppModalProps) {
               </ThemedText>
             </Pressable>
           </View>
-          {children}
+          <View style={styles.body}>{children}</View>
         </Animated.View>
       </KeyboardAvoidingView>
     </Modal>
@@ -72,6 +71,7 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
     maxHeight: '90%',
     padding: Spacing.three,
+    width: '100%',
     shadowOffset: { width: 0, height: -16 },
     shadowOpacity: 0.22,
     shadowRadius: 28,
@@ -87,5 +87,8 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: 'center',
     width: 40,
+  },
+  body: {
+    flexShrink: 1,
   },
 });

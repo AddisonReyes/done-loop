@@ -18,6 +18,12 @@ jest.mock('@/features/habits/repositories', () => ({
   },
 }));
 
+jest.mock('expo-router', () => ({
+  router: {
+    navigate: jest.fn(),
+  },
+}));
+
 const habit: Habit = {
   id: 'habit_1',
   name: 'Read',
@@ -95,6 +101,48 @@ describe('NotificationService', () => {
     expect(notifications.scheduleNotificationAsync).not.toHaveBeenCalled();
   });
 
+  it('schedules todo reminders with routing metadata', async () => {
+    jest.mocked(notifications.getPermissionsAsync).mockResolvedValue({ granted: true } as Awaited<
+      ReturnType<NotificationsModule['getPermissionsAsync']>
+    >);
+    jest.mocked(notifications.scheduleNotificationAsync).mockResolvedValue('todo-notification-id');
+
+    await expect(
+      NotificationService.scheduleTodoReminderAsync({ title: 'Pay rent', dueAt: '2026-06-03', language: 'es' })
+    ).resolves.toBe('todo-notification-id');
+
+    expect(notifications.scheduleNotificationAsync).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: expect.objectContaining({
+          body: 'Pay rent',
+          data: { type: 'todo_reminder', language: 'es' },
+        }),
+      })
+    );
+  });
+
+  it('routes todo notification taps to the todos screen', async () => {
+    const { router } = jest.requireMock('expo-router') as { router: { navigate: jest.Mock } };
+    let listener: ((response: unknown) => void) | undefined;
+    jest.mocked(notifications.addNotificationResponseReceivedListener).mockImplementation((callback) => {
+      listener = callback as (response: unknown) => void;
+      return { remove: jest.fn() };
+    });
+
+    await expect(NotificationService.configureResponseHandlingAsync()).resolves.toBe(true);
+    listener?.({
+      actionIdentifier: 'default',
+      notification: {
+        request: {
+          content: { data: { type: 'todo_reminder' } },
+          identifier: 'notification_1',
+        },
+      },
+    });
+
+    expect(router.navigate).toHaveBeenCalledWith('/todos');
+  });
+
   it('schedules habit reminders only when permissions and time are valid', async () => {
     jest.mocked(notifications.getPermissionsAsync).mockResolvedValue({ granted: true } as Awaited<
       ReturnType<NotificationsModule['getPermissionsAsync']>
@@ -170,6 +218,13 @@ describe('NotificationService', () => {
         },
       })
     );
+  });
+
+  it('cancels scheduled and delivered notifications by id', async () => {
+    await expect(NotificationService.cancelAsync('notification-id')).resolves.toBeUndefined();
+
+    expect(notifications.cancelScheduledNotificationAsync).toHaveBeenCalledWith('notification-id');
+    expect(notifications.dismissNotificationAsync).toHaveBeenCalledWith('notification-id');
   });
 
   it('requests permissions at the point of need', async () => {

@@ -5,7 +5,7 @@ import { TodoRepository } from '@/features/todos/repositories';
 
 import { SettingsRepository } from '../repositories/settings-repository';
 
-async function rescheduleExistingRemindersAsync(language: UserLanguagePreference): Promise<void> {
+export async function rescheduleExistingRemindersAsync(language: UserLanguagePreference): Promise<void> {
   await NotificationService.cancelAllAsync();
 
   const [habits, todos] = await Promise.all([

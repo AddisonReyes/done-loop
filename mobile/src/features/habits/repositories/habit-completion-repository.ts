@@ -27,34 +27,8 @@ function mapHabitCompletionRow(row: HabitCompletionRow): HabitCompletion {
 export const HabitCompletionRepository = {
   async upsert(input: UpsertHabitCompletionInput): Promise<HabitCompletion> {
     const database = await getDatabaseAsync();
-    const existing = await this.findByHabitAndDate(input.habitId, input.date);
     const now = new Date().toISOString();
-
-    if (existing) {
-      await database.runAsync(
-        `UPDATE habit_completions
-         SET completed = ?, updated_at = ?
-         WHERE id = ?;`,
-        toSQLiteBoolean(input.completed),
-        now,
-        existing.id
-      );
-
-      return {
-        ...existing,
-        completed: input.completed,
-        updatedAt: now,
-      };
-    }
-
-    const completion: HabitCompletion = {
-      id: createLocalId('habit_completion'),
-      habitId: input.habitId,
-      date: input.date,
-      completed: input.completed,
-      createdAt: now,
-      updatedAt: now,
-    };
+    const completionId = createLocalId('habit_completion');
 
     await database.runAsync(
       `INSERT INTO habit_completions (
@@ -64,16 +38,29 @@ export const HabitCompletionRepository = {
         completed,
         created_at,
         updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?);`,
-      completion.id,
-      completion.habitId,
-      completion.date,
-      toSQLiteBoolean(completion.completed),
-      completion.createdAt,
-      completion.updatedAt
+      ) VALUES (?, ?, ?, ?, ?, ?)
+      ON CONFLICT(habit_id, date) DO UPDATE SET
+        completed = excluded.completed,
+        updated_at = excluded.updated_at;`,
+      completionId,
+      input.habitId,
+      input.date,
+      toSQLiteBoolean(input.completed),
+      now,
+      now
     );
 
-    return completion;
+    const row = await database.getFirstAsync<HabitCompletionRow>(
+      'SELECT * FROM habit_completions WHERE habit_id = ? AND date = ?;',
+      input.habitId,
+      input.date
+    );
+
+    if (row) {
+      return mapHabitCompletionRow(row);
+    }
+
+    throw new Error('Could not read saved habit completion.');
   },
 
   async findByHabitAndDate(habitId: string, date: string): Promise<HabitCompletion | null> {

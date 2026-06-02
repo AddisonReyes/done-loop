@@ -4,17 +4,19 @@ import Animated, { FadeInUp, FadeOutUp, LinearTransition } from 'react-native-re
 import { useThemePreference } from '@/hooks/use-theme-preference';
 
 type AnimatedListItemProps = PropsWithChildren<{
+  animate?: boolean;
   delay?: number;
 }>;
 
-export function AnimatedListItem({ children, delay = 0 }: AnimatedListItemProps) {
+export function AnimatedListItem({ animate = true, children, delay = 0 }: AnimatedListItemProps) {
   const { animationsEnabled } = useThemePreference();
+  const shouldAnimate = animationsEnabled && animate;
 
   return (
     <Animated.View
-      entering={animationsEnabled ? FadeInUp.duration(180).delay(delay) : undefined}
-      exiting={animationsEnabled ? FadeOutUp.duration(140) : undefined}
-      layout={animationsEnabled ? LinearTransition.duration(180) : undefined}>
+      entering={shouldAnimate ? FadeInUp.duration(180).delay(delay) : undefined}
+      exiting={shouldAnimate ? FadeOutUp.duration(140) : undefined}
+      layout={shouldAnimate ? LinearTransition.duration(180) : undefined}>
       {children}
     </Animated.View>
   );

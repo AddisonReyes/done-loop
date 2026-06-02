@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { TodoEditorModal } from '@/features/todos/components/todo-editor-modal';
@@ -27,12 +27,26 @@ const modes: { value: TodoViewMode; labelKey: string }[] = [
   { value: 'list', labelKey: 'todos.modes.list' },
   { value: 'calendar', labelKey: 'todos.modes.calendar' },
 ];
+const animatedListItemLimit = 24;
 
 export default function TodosScreen() {
   const { locale, t } = useTranslation();
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
   const todos = useTodos();
+
+  const confirmDeleteTodo = (todo: Todo) => {
+    Alert.alert(t('todos.actions.delete'), todo.title, [
+      { text: t('todos.actions.cancel'), style: 'cancel' },
+      {
+        text: t('todos.actions.delete'),
+        style: 'destructive',
+        onPress: () => {
+          void todos.deleteTodo(todo);
+        },
+      },
+    ]);
+  };
 
   return (
     <View style={styles.screen}>
@@ -70,13 +84,13 @@ export default function TodosScreen() {
                   {isDateKey(dateKey) ? formatDateKey(dateKey, locale, todos.dateFormat) : dateKey}
                 </ThemedText>
                 {groupedTodos.map((todo, index) => (
-                  <AnimatedListItem key={todo.id} delay={index * 18}>
+                  <AnimatedListItem key={todo.id} animate={index < animatedListItemLimit} delay={index * 18}>
                     <TodoListItem
                       todo={todo}
                       dateLabel={todos.getTodoDateLabel(todo)}
                       onComplete={() => void todos.completeTodo(todo)}
                       onReopen={() => void todos.reopenTodo(todo)}
-                      onDelete={() => void todos.deleteTodo(todo)}
+                      onDelete={() => confirmDeleteTodo(todo)}
                       onStartEdit={() => setEditingTodo(todo)}
                     />
                   </AnimatedListItem>
@@ -87,13 +101,13 @@ export default function TodosScreen() {
         ) : (
           <View style={styles.list}>
             {todos.sortedTodos.map((todo, index) => (
-              <AnimatedListItem key={todo.id} delay={index * 18}>
+              <AnimatedListItem key={todo.id} animate={index < animatedListItemLimit} delay={index * 18}>
                 <TodoListItem
                   todo={todo}
                   dateLabel={todos.getTodoDateLabel(todo)}
                   onComplete={() => void todos.completeTodo(todo)}
                   onReopen={() => void todos.reopenTodo(todo)}
-                  onDelete={() => void todos.deleteTodo(todo)}
+                  onDelete={() => confirmDeleteTodo(todo)}
                   onStartEdit={() => setEditingTodo(todo)}
                 />
               </AnimatedListItem>

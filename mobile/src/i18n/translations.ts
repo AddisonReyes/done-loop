@@ -160,6 +160,7 @@ export const translations = {
         none: 'No background',
         gradient: 'Gradient',
         grid: 'Grid',
+        solar: 'Solar',
       },
       language: {
         section: 'Language',
@@ -197,6 +198,8 @@ export const translations = {
       habits: 'Habit activity',
       tasks: 'Tasks',
       noTasks: 'No tasks for this month.',
+      previousMonth: 'Previous month',
+      nextMonth: 'Next month',
     },
   },
   es: {
@@ -360,6 +363,7 @@ export const translations = {
         none: 'Sin fondo',
         gradient: 'Gradiente',
         grid: 'Grid',
+        solar: 'Solar',
       },
       language: {
         section: 'Idioma',
@@ -397,6 +401,8 @@ export const translations = {
       habits: 'Actividad de hábitos',
       tasks: 'Tareas',
       noTasks: 'No hay tareas para este mes.',
+      previousMonth: 'Mes anterior',
+      nextMonth: 'Mes siguiente',
     },
   },
 } as const;

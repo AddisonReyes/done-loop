@@ -32,6 +32,7 @@ export function HabitMonthHistory({
     <View style={styles.container}>
       <View style={styles.header}>
         <Pressable
+          accessibilityLabel={t('calendar.previousMonth')}
           accessibilityRole="button"
           onPress={onPreviousMonth}
           style={[styles.navButton, { backgroundColor: theme.backgroundSelected, borderColor: theme.border }]}>
@@ -43,6 +44,7 @@ export function HabitMonthHistory({
           {monthLabel}
         </ThemedText>
         <Pressable
+          accessibilityLabel={t('calendar.nextMonth')}
           accessibilityRole="button"
           onPress={onNextMonth}
           style={[styles.navButton, { backgroundColor: theme.backgroundSelected, borderColor: theme.border }]}>
@@ -90,18 +92,18 @@ export function HabitMonthHistory({
       </View>
 
       <View style={styles.legend}>
-        <LegendDot label={t('habits.history.none')} color={theme.historyEmpty} />
-        <LegendDot label={t('habits.history.partial')} color={theme.historyPartial} />
-        <LegendDot label={t('habits.history.complete')} color={theme.historyComplete} />
+        <LegendDot label={t('habits.history.none')} color={theme.historyEmpty} borderColor={theme.border} />
+        <LegendDot label={t('habits.history.partial')} color={theme.historyPartial} borderColor={theme.border} />
+        <LegendDot label={t('habits.history.complete')} color={theme.historyComplete} borderColor={theme.border} />
       </View>
     </View>
   );
 }
 
-function LegendDot({ label, color }: { label: string; color: string }) {
+function LegendDot({ borderColor, label, color }: { borderColor: string; label: string; color: string }) {
   return (
     <View style={styles.legendItem}>
-      <View style={[styles.legendDot, { backgroundColor: color }]} />
+      <View style={[styles.legendDot, { backgroundColor: color, borderColor }]} />
       <ThemedText type="small" themeColor="textSecondary">
         {label}
       </ThemedText>
@@ -148,9 +150,11 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   legend: {
+    alignItems: 'center',
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.two,
+    justifyContent: 'center',
   },
   legendItem: {
     flexDirection: 'row',
@@ -161,5 +165,6 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
+    borderWidth: 1,
   },
 });

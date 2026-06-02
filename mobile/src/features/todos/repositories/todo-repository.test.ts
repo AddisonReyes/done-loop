@@ -79,14 +79,18 @@ describe('TodoRepository', () => {
     expect(database.runAsync).not.toHaveBeenCalled();
   });
 
-  it('deletes todos by id', async () => {
+  it('soft deletes todos by id', async () => {
     const database = {
       runAsync: jest.fn(async () => ({ changes: 1, lastInsertRowId: 1 })),
     };
     mockedGetDatabaseAsync.mockResolvedValue(database as never);
 
     await expect(TodoRepository.deleteById('todo_1')).resolves.toBe(true);
-    expect(database.runAsync).toHaveBeenCalledWith('DELETE FROM todos WHERE id = ?;', 'todo_1');
+    expect(database.runAsync).toHaveBeenCalledWith(
+      expect.stringContaining("SET status = 'deleted'"),
+      expect.any(String),
+      expect.any(String),
+      'todo_1'
+    );
   });
 });
-

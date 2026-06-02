@@ -138,7 +138,15 @@ export const TodoRepository = {
 
   async deleteById(id: string): Promise<boolean> {
     const database = await getDatabaseAsync();
-    const result = await database.runAsync('DELETE FROM todos WHERE id = ?;', id);
+    const now = new Date().toISOString();
+    const result = await database.runAsync(
+      `UPDATE todos
+       SET status = 'deleted', deleted_at = ?, updated_at = ?
+       WHERE id = ?;`,
+      now,
+      now,
+      id
+    );
     return result.changes > 0;
   },
 };

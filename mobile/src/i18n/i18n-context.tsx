@@ -1,6 +1,7 @@
 import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import { SettingsRepository } from '@/features/settings/repositories/settings-repository';
+import { rescheduleExistingRemindersAsync } from '@/features/settings/services/notification-settings';
 import type { UserLanguagePreference } from '@/features/settings/types';
 
 import { translations } from './translations';
@@ -63,6 +64,9 @@ export function I18nProvider({ children }: PropsWithChildren) {
   const setLanguage = useCallback(async (nextLanguage: UserLanguagePreference) => {
     const settings = await SettingsRepository.update({ language: nextLanguage });
     setLanguageState(settings.language);
+    if (settings.notificationsEnabled) {
+      await rescheduleExistingRemindersAsync(settings.language).catch(() => undefined);
+    }
   }, []);
 
   const t = useCallback(

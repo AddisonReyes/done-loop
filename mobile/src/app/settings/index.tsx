@@ -50,6 +50,7 @@ const appBackgroundOptions: { value: UserAppBackgroundPreference; labelKey: stri
   { value: 'none', labelKey: 'settings.appBackground.none' },
   { value: 'gradient', labelKey: 'settings.appBackground.gradient' },
   { value: 'grid', labelKey: 'settings.appBackground.grid' },
+  { value: 'solar', labelKey: 'settings.appBackground.solar' },
 ];
 
 const SourceCodeUrl = 'https://github.com/AddisonReyes/done-loop';
@@ -78,10 +79,7 @@ export default function SettingsScreen() {
       ) : (
         <>
           <SectionCard title={t('settings.preferences')}>
-            <Pressable
-              accessibilityRole="switch"
-              accessibilityState={{ checked: settings.notificationsEnabled }}
-              onPress={() => void setNotificationsEnabled(!settings.notificationsEnabled)}
+            <View
               style={[
                 styles.row,
                 {
@@ -96,14 +94,15 @@ export default function SettingsScreen() {
                 </ThemedText>
               </View>
               <Switch
+                accessibilityLabel={t('settings.notifications')}
+                ios_backgroundColor={theme.backgroundSelected}
+                thumbColor={settings.notificationsEnabled ? theme.accent : theme.textMuted}
+                trackColor={{ false: theme.backgroundSelected, true: theme.accentSoft }}
                 value={settings.notificationsEnabled}
                 onValueChange={(enabled) => void setNotificationsEnabled(enabled)}
               />
-            </Pressable>
-            <Pressable
-              accessibilityRole="switch"
-              accessibilityState={{ checked: settings.animationsEnabled }}
-              onPress={() => void setAnimationsEnabled(!settings.animationsEnabled)}
+            </View>
+            <View
               style={[
                 styles.row,
                 {
@@ -118,10 +117,14 @@ export default function SettingsScreen() {
                 </ThemedText>
               </View>
               <Switch
+                accessibilityLabel={t('settings.animations')}
+                ios_backgroundColor={theme.backgroundSelected}
+                thumbColor={settings.animationsEnabled ? theme.accent : theme.textMuted}
+                trackColor={{ false: theme.backgroundSelected, true: theme.accentSoft }}
                 value={settings.animationsEnabled}
                 onValueChange={(enabled) => void setAnimationsEnabled(enabled)}
               />
-            </Pressable>
+            </View>
           </SectionCard>
 
           <SectionCard title={t('settings.customization')}>
