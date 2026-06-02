@@ -178,6 +178,8 @@ export const translations = {
     },
     notifications: {
       habitBody: 'Time to complete: {{habitName}}',
+      markHabitComplete: 'Mark complete',
+      remindIn30Minutes: 'Remind in 30 minutes',
       todoTitle: 'Upcoming task',
     },
     calendar: {
@@ -368,6 +370,8 @@ export const translations = {
     },
     notifications: {
       habitBody: 'Hora de completar: {{habitName}}',
+      markHabitComplete: 'Marcar completado',
+      remindIn30Minutes: 'Recordar en 30 minutos',
       todoTitle: 'Tarea próxima',
     },
     calendar: {

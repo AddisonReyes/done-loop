@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { NotificationService } from '@/features/notifications/services/notification-service';
 import { useDateFormatPreference } from '@/features/settings/hooks/use-date-format-preference';
@@ -6,12 +6,16 @@ import { SettingsRepository } from '@/features/settings/repositories/settings-re
 import { TodoRepository } from '@/features/todos/repositories';
 import type { CreateTodoInput, Todo, UpdateTodoInput } from '@/features/todos/types';
 import { useTranslation } from '@/i18n';
+import { emitAppEvent, subscribeToAppEvent } from '@/shared/events/app-events';
 import { useCurrentDateKey } from '@/shared/hooks/use-current-date-key';
 import { formatDateKey, isBeforeDateKey, isDateKey } from '@/shared/utils/date';
 import { normalizeTodoCreateDraft, normalizeTodoUpdateDraft } from '../services/todo-draft';
 
 type TodoSort = 'priority' | 'dueAt' | 'createdAt';
 type TodoViewMode = 'list' | 'calendar';
+type LoadOptions = {
+  silent?: boolean;
+};
 
 export function useTodos() {
   const { language, locale, t } = useTranslation();
@@ -20,18 +24,26 @@ export function useTodos() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [sort, setSort] = useState<TodoSort>('priority');
   const [viewMode, setViewMode] = useState<TodoViewMode>('list');
+  const hasLoadedTodosRef = useRef(false);
   const dateFormat = useDateFormatPreference();
   const todayKey = useCurrentDateKey();
 
-  const loadTodos = useCallback(async () => {
+  const loadTodos = useCallback(async (options: LoadOptions = {}) => {
+    const shouldShowLoading = !options.silent && !hasLoadedTodosRef.current;
+
     try {
-      setStatus('loading');
-      setErrorMessage(null);
+      if (shouldShowLoading) {
+        setStatus('loading');
+      }
       setTodos(await TodoRepository.listActive());
+      hasLoadedTodosRef.current = true;
+      setErrorMessage(null);
       setStatus('idle');
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : t('todos.loadError'));
-      setStatus('error');
+      if (!options.silent || !hasLoadedTodosRef.current) {
+        setErrorMessage(error instanceof Error ? error.message : t('todos.loadError'));
+        setStatus('error');
+      }
     }
   }, [t]);
 
@@ -43,6 +55,12 @@ export function useTodos() {
     return () => {
       clearTimeout(timeout);
     };
+  }, [loadTodos]);
+
+  useEffect(() => {
+    return subscribeToAppEvent('todosChanged', () => {
+      void loadTodos({ silent: true });
+    });
   }, [loadTodos]);
 
   const createTodoFromDraft = useCallback(
@@ -67,7 +85,8 @@ export function useTodos() {
           ...draft,
           notificationId,
         });
-        await loadTodos();
+        await loadTodos({ silent: true });
+        emitAppEvent('todosChanged');
         return true;
       } catch (error) {
         setErrorMessage(error instanceof Error ? error.message : t('todos.saveError'));
@@ -99,7 +118,8 @@ export function useTodos() {
           : undefined;
 
         await TodoRepository.update(todo.id, { ...draft, notificationId });
-        await loadTodos();
+        await loadTodos({ silent: true });
+        emitAppEvent('todosChanged');
         return true;
       } catch (error) {
         setErrorMessage(error instanceof Error ? error.message : t('todos.saveError'));
@@ -119,7 +139,8 @@ export function useTodos() {
           completedAt: new Date().toISOString(),
           notificationId: undefined,
         });
-        await loadTodos();
+        await loadTodos({ silent: true });
+        emitAppEvent('todosChanged');
         return true;
       } catch (error) {
         setErrorMessage(error instanceof Error ? error.message : t('todos.saveError'));
@@ -147,7 +168,8 @@ export function useTodos() {
           completedAt: undefined,
           notificationId,
         });
-        await loadTodos();
+        await loadTodos({ silent: true });
+        emitAppEvent('todosChanged');
         return true;
       } catch (error) {
         setErrorMessage(error instanceof Error ? error.message : t('todos.saveError'));
@@ -163,7 +185,8 @@ export function useTodos() {
         setErrorMessage(null);
         await NotificationService.cancelAsync(todo.notificationId);
         await TodoRepository.deleteById(todo.id);
-        await loadTodos();
+        await loadTodos({ silent: true });
+        emitAppEvent('todosChanged');
         return true;
       } catch (error) {
         setErrorMessage(error instanceof Error ? error.message : t('todos.saveError'));

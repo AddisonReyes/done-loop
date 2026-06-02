@@ -18,9 +18,7 @@ async function rescheduleExistingRemindersAsync(language: UserLanguagePreference
       .filter((habit) => habit.remindersEnabled)
       .map(async (habit) => {
         const notificationId = await NotificationService.scheduleHabitReminderAsync({
-          habitId: habit.id,
-          habitName: habit.name,
-          reminderTime: habit.reminderTime,
+          habit,
           language,
         });
         await HabitRepository.update(habit.id, { notificationId });

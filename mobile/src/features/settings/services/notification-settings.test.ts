@@ -113,7 +113,7 @@ describe('setNotificationsEnabledPreferenceAsync', () => {
 
     expect(NotificationService.cancelAllAsync).toHaveBeenCalledTimes(1);
     expect(NotificationService.scheduleHabitReminderAsync).toHaveBeenCalledWith(
-      expect.objectContaining({ habitId: 'habit_1', language: 'en' })
+      expect.objectContaining({ habit: expect.objectContaining({ id: 'habit_1' }), language: 'en' })
     );
     expect(NotificationService.scheduleTodoReminderAsync).toHaveBeenCalledWith(
       expect.objectContaining({ title: 'Pay rent', language: 'en' })

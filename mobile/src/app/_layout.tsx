@@ -32,6 +32,7 @@ function ThemedNavigation() {
 
   useEffect(() => {
     void NotificationService.configureForegroundHandlingAsync();
+    void NotificationService.configureResponseHandlingAsync();
   }, []);
 
   return (
