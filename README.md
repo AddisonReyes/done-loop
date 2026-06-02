@@ -107,4 +107,4 @@ The website is deployed at <https://done-loop.pages.dev/>.
 - Privacy Policy: <https://done-loop.pages.dev/privacy>
 - Terms of Service: <https://done-loop.pages.dev/terms>
 - Source code: <https://github.com/AddisonReyes/done-loop>
-- License: MIT, see `LICENSE` and `LICENSE.md`.
+- License: MIT, see `LICENSE`.
