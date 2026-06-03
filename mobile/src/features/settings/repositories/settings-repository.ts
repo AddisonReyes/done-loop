@@ -16,7 +16,7 @@ import type {
   UserThemePreference,
 } from '../types';
 
-const PrivacyPolicyUrl = 'https://done-loop.pages.dev/privacy';
+const PrivacyPolicyUrl = 'https://done-loop.com/privacy';
 const TermsUrl = 'https://done-loop.pages.dev/terms';
 const FreePlan = 'free';
 const settingsListeners = new Set<(settings: UserSettings) => void>();

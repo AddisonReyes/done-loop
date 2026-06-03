@@ -133,7 +133,7 @@ npm run lint
 
 ## Legal And Source
 
-- Privacy Policy: https://done-loop.pages.dev/privacy
+- Privacy Policy: https://done-loop.com/privacy
 - Terms of Service: https://done-loop.pages.dev/terms
 - Source code: https://github.com/AddisonReyes/done-loop
 - License: MIT, see the repository root `LICENSE` and `LICENSE.md`.

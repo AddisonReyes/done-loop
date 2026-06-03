@@ -42,7 +42,7 @@ const enabledSettings: UserSettings = {
   dateFormat: 'dmy',
   language: 'en',
   notificationsEnabled: true,
-  privacyPolicyUrl: 'https://done-loop.pages.dev/privacy',
+  privacyPolicyUrl: 'https://done-loop.com/privacy',
   termsUrl: 'https://done-loop.pages.dev/terms',
   theme: 'system',
 };

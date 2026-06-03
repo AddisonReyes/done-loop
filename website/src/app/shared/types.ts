@@ -9,6 +9,7 @@ export type LegalSection = {
 
 export type LegalContent = {
   title: string;
+  updated?: string;
   intro: string;
   sections: LegalSection[];
 };
