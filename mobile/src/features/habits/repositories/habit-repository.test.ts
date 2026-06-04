@@ -51,6 +51,7 @@ describe('HabitRepository', () => {
       1,
       expect.any(String),
       expect.any(String),
+      expect.any(String),
       null
     );
   });

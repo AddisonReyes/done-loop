@@ -34,6 +34,20 @@ describe('habit recurrence', () => {
     expect(isHabitDueOnDate(custom, '2026-05-05')).toBe(false);
   });
 
+  it('prefers persisted local start dates over createdAt timestamps', () => {
+    const habit = createHabit({
+      recurrenceType: 'custom',
+      customIntervalDays: 2,
+      createdAt: '2026-05-01T23:30:00.000Z',
+      startDate: '2026-05-02',
+    });
+
+    expect(isHabitDueOnDate(habit, '2026-05-01')).toBe(false);
+    expect(isHabitDueOnDate(habit, '2026-05-02')).toBe(true);
+    expect(isHabitDueOnDate(habit, '2026-05-03')).toBe(false);
+    expect(isHabitDueOnDate(habit, '2026-05-04')).toBe(true);
+  });
+
   it('matches weekly habits on selected weekdays', () => {
     const habit = createHabit({ recurrenceType: 'weekly', weeklyDays: [1, 3, 5] });
 

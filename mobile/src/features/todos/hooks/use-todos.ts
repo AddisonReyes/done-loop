@@ -8,7 +8,7 @@ import type { CreateTodoInput, Todo, UpdateTodoInput } from '@/features/todos/ty
 import { useTranslation } from '@/i18n';
 import { emitAppEvent, subscribeToAppEvent } from '@/shared/events/app-events';
 import { useCurrentDateKey } from '@/shared/hooks/use-current-date-key';
-import { formatDateKey, isBeforeDateKey, isDateKey } from '@/shared/utils/date';
+import { formatDateKey, isBeforeDateKey, isDateKey, toDateKey } from '@/shared/utils/date';
 import { normalizeTodoCreateDraft, normalizeTodoUpdateDraft } from '../services/todo-draft';
 
 type TodoSort = 'priority' | 'dueAt' | 'createdAt';
@@ -138,6 +138,7 @@ export function useTodos() {
         await TodoRepository.update(todo.id, {
           status: 'completed',
           completedAt: new Date().toISOString(),
+          completedDate: toDateKey(new Date()),
           notificationId: undefined,
         });
         await loadTodos({ silent: true });
@@ -167,6 +168,7 @@ export function useTodos() {
         await TodoRepository.update(todo.id, {
           status: 'pending',
           completedAt: undefined,
+          completedDate: undefined,
           notificationId,
         });
         await loadTodos({ silent: true });
@@ -213,7 +215,7 @@ export function useTodos() {
     const groups = new Map<string, Todo[]>();
 
     for (const todo of todos) {
-      const completedDateKey = todo.completedAt?.slice(0, 10);
+      const completedDateKey = todo.completedDate ?? getCompletedDateKey(todo.completedAt);
       const dateKey = isDateKey(todo.dueAt)
         ? todo.dueAt
         : isDateKey(completedDateKey)
@@ -228,7 +230,9 @@ export function useTodos() {
   const getTodoDateLabel = useCallback(
     (todo: Todo) => {
       if (todo.status === 'completed' && todo.completedAt) {
-        return t('todos.completed', { date: formatDateKey(todo.completedAt.slice(0, 10), locale, dateFormat) });
+        return t('todos.completed', {
+          date: formatDateKey(todo.completedDate ?? getCompletedDateKey(todo.completedAt), locale, dateFormat),
+        });
       }
       if (!isDateKey(todo.dueAt)) {
         return t('todos.noDueDate');
@@ -264,3 +268,12 @@ export function useTodos() {
 }
 
 export type { TodoSort, TodoViewMode };
+
+function getCompletedDateKey(completedAt: string | undefined): string | undefined {
+  if (!completedAt) {
+    return undefined;
+  }
+
+  const completedDate = new Date(completedAt);
+  return Number.isNaN(completedDate.getTime()) ? undefined : toDateKey(completedDate);
+}

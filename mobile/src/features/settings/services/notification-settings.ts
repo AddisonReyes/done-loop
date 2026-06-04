@@ -44,6 +44,10 @@ export async function setNotificationsEnabledPreferenceAsync(
 
   if (!enabled) {
     await NotificationService.cancelAllAsync();
+    await Promise.all([
+      HabitRepository.clearAllNotificationIds(),
+      TodoRepository.clearAllNotificationIds(),
+    ]);
     return SettingsRepository.update({ notificationsEnabled: false });
   }
 

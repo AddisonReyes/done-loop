@@ -1,6 +1,7 @@
 import { createLocalId } from '@/storage/database/ids';
 import { fromSQLiteBoolean, toSQLiteBoolean } from '@/storage/database/sqlite-mappers';
 import { getDatabaseAsync } from '@/storage/database/client';
+import { isDateKey } from '@/shared/utils/date';
 
 import type { HabitCompletion, UpsertHabitCompletionInput } from '../types';
 
@@ -26,6 +27,10 @@ function mapHabitCompletionRow(row: HabitCompletionRow): HabitCompletion {
 
 export const HabitCompletionRepository = {
   async upsert(input: UpsertHabitCompletionInput): Promise<HabitCompletion> {
+    if (!isDateKey(input.date)) {
+      throw new Error('Invalid habit completion date.');
+    }
+
     const database = await getDatabaseAsync();
     const now = new Date().toISOString();
     const completionId = createLocalId('habit_completion');
@@ -64,6 +69,10 @@ export const HabitCompletionRepository = {
   },
 
   async findByHabitAndDate(habitId: string, date: string): Promise<HabitCompletion | null> {
+    if (!isDateKey(date)) {
+      throw new Error('Invalid habit completion date.');
+    }
+
     const database = await getDatabaseAsync();
     const row = await database.getFirstAsync<HabitCompletionRow>(
       'SELECT * FROM habit_completions WHERE habit_id = ? AND date = ?;',
@@ -85,6 +94,10 @@ export const HabitCompletionRepository = {
   },
 
   async listByDateRange(startDate: string, endDate: string): Promise<HabitCompletion[]> {
+    if (!isDateKey(startDate) || !isDateKey(endDate)) {
+      throw new Error('Invalid habit completion date range.');
+    }
+
     const database = await getDatabaseAsync();
     const rows = await database.getAllAsync<HabitCompletionRow>(
       `SELECT * FROM habit_completions

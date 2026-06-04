@@ -7,6 +7,7 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemePreference } from '@/hooks/use-theme-preference';
+import { useTranslation } from '@/i18n';
 
 type AppModalProps = PropsWithChildren<{
   title: string;
@@ -17,6 +18,7 @@ type AppModalProps = PropsWithChildren<{
 export function AppModal({ children, onClose, title, visible }: AppModalProps) {
   const theme = useTheme();
   const { animationsEnabled } = useThemePreference();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
   return (
@@ -25,7 +27,12 @@ export function AppModal({ children, onClose, title, visible }: AppModalProps) {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.root}>
         <Animated.View entering={animationsEnabled ? FadeIn.duration(160) : undefined} style={styles.backdrop}>
-          <Pressable accessibilityRole="button" style={styles.backdropPressable} onPress={onClose} />
+          <Pressable
+            accessibilityLabel={t('common.close')}
+            accessibilityRole="button"
+            style={styles.backdropPressable}
+            onPress={onClose}
+          />
         </Animated.View>
         <Animated.View
           style={[
@@ -41,7 +48,11 @@ export function AppModal({ children, onClose, title, visible }: AppModalProps) {
             <ThemedText type="smallBold" style={styles.title}>
               {title}
             </ThemedText>
-            <Pressable accessibilityRole="button" onPress={onClose} style={styles.closeButton}>
+            <Pressable
+              accessibilityLabel={t('common.close')}
+              accessibilityRole="button"
+              onPress={onClose}
+              style={styles.closeButton}>
               <ThemedText type="smallBold" themeColor="textSecondary">
                 ×
               </ThemedText>
@@ -90,9 +101,9 @@ const styles = StyleSheet.create({
   closeButton: {
     alignItems: 'center',
     flexShrink: 0,
-    height: 40,
+    height: 44,
     justifyContent: 'center',
-    width: 40,
+    width: 44,
   },
   title: {
     flex: 1,

@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import Constants from "expo-constants";
-import { Linking, Pressable, StyleSheet, Switch, View } from "react-native";
+import { Alert, Linking, Pressable, StyleSheet, Switch, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { AccentColors, Spacing } from "@/constants/theme";
@@ -333,14 +333,29 @@ function LinkInfoRow({
   value: string;
 }) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const visibleValue = displayValue ?? value;
+
+  const openLink = async () => {
+    try {
+      const canOpen = await Linking.canOpenURL(value);
+      if (!canOpen) {
+        Alert.alert(t('settings.openLinkError'), value);
+        return;
+      }
+
+      await Linking.openURL(value);
+    } catch {
+      Alert.alert(t('settings.openLinkError'), value);
+    }
+  };
 
   return (
     <Pressable
       accessibilityRole="link"
       accessibilityLabel={`${label}: ${visibleValue}`}
       onPress={() => {
-        void Linking.openURL(value);
+        void openLink();
       }}
       style={({ pressed }) => [styles.infoRow, pressed && styles.pressedRow]}
     >

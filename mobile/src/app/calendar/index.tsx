@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Alert, Pressable, StyleSheet, View } from "react-native";
 
 import { ThemedText } from "@/components/themed-text";
 import { Spacing } from "@/constants/theme";
@@ -9,6 +9,7 @@ import { getHabitRecurrenceDetail } from "@/features/habits/services/habit-recur
 import type { Habit } from "@/features/habits/types";
 import { TodoListItem } from "@/features/todos/components/todo-list-item";
 import { useTodos } from "@/features/todos/hooks/use-todos";
+import type { Todo } from "@/features/todos/types";
 import { useTheme } from "@/hooks/use-theme";
 import { useTranslation } from "@/i18n";
 import { ScreenScaffold } from "@/shared/components/screen-scaffold";
@@ -27,6 +28,8 @@ export default function CalendarScreen() {
   const visibleTodoGroups = selectedDateKey
     ? monthlyTodoGroups.filter(([dateKey]) => dateKey === selectedDateKey)
     : monthlyTodoGroups;
+  const isLoading = habits.isLoading || todos.isLoading;
+  const errorMessage = habits.errorMessage ?? todos.errorMessage;
   const selectedHabits = useMemo(
     () => (selectedDateKey ? habits.getHabitsForDate(selectedDateKey) : []),
     [habits, selectedDateKey],
@@ -50,6 +53,22 @@ export default function CalendarScreen() {
     setSelectedDateKey(undefined);
     habits.goToNextMonth();
   }, [habits]);
+
+  const confirmDeleteTodo = useCallback(
+    (todo: Todo) => {
+      Alert.alert(t("todos.actions.delete"), todo.title, [
+        { text: t("todos.actions.cancel"), style: "cancel" },
+        {
+          text: t("todos.actions.delete"),
+          style: "destructive",
+          onPress: () => {
+            void todos.deleteTodo(todo);
+          },
+        },
+      ]);
+    },
+    [t, todos],
+  );
 
   return (
     <ScreenScaffold title={t("calendar.title")}>
@@ -99,7 +118,7 @@ export default function CalendarScreen() {
           </View>
         ) : null}
         {selectedDateKey ? (
-          selectedHabits.length === 0 ? (
+          isLoading ? null : selectedHabits.length === 0 ? (
             <ThemedText type="small" themeColor="textSecondary">
               {t("calendar.noHabitsForDay")}
             </ThemedText>
@@ -117,7 +136,16 @@ export default function CalendarScreen() {
         <ThemedText type="smallBold" themeColor="accentStrong">
           {t("calendar.tasks")}
         </ThemedText>
-        {visibleTodoGroups.length === 0 ? (
+        {errorMessage ? (
+          <ThemedText type="small" themeColor="warning">
+            {errorMessage}
+          </ThemedText>
+        ) : null}
+        {isLoading ? (
+          <ThemedText type="small" themeColor="textSecondary">
+            {t("todos.loading")}
+          </ThemedText>
+        ) : visibleTodoGroups.length === 0 ? (
           <ThemedText type="small" themeColor="textSecondary">
             {t(selectedDateKey ? "calendar.noTasksForDay" : "calendar.noTasks")}
           </ThemedText>
@@ -134,7 +162,7 @@ export default function CalendarScreen() {
                   dateLabel={todos.getTodoDateLabel(todo)}
                   onComplete={() => void todos.completeTodo(todo)}
                   onReopen={() => void todos.reopenTodo(todo)}
-                  onDelete={() => void todos.deleteTodo(todo)}
+                  onDelete={() => confirmDeleteTodo(todo)}
                 />
               ))}
             </View>
@@ -210,7 +238,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1,
     justifyContent: "center",
-    minHeight: 40,
+    minHeight: 44,
     paddingHorizontal: Spacing.three,
   },
   group: {

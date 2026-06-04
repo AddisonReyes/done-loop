@@ -12,6 +12,7 @@ export type Habit = {
   remindersEnabled: boolean;
   notificationId?: string;
   isActive: boolean;
+  startDate?: string;
   createdAt: string;
   updatedAt: string;
   deletedAt?: string;
@@ -28,6 +29,7 @@ export type CreateHabitInput = {
   remindersEnabled?: boolean;
   notificationId?: string;
   isActive?: boolean;
+  startDate?: string;
 };
 
 export type UpdateHabitInput = Partial<CreateHabitInput> & {

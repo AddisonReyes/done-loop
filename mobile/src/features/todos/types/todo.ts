@@ -10,6 +10,7 @@ export type Todo = {
   status: TodoStatus;
   dueAt?: string;
   completedAt?: string;
+  completedDate?: string;
   deletedAt?: string;
   notificationId?: string;
   createdAt: string;
@@ -27,5 +28,6 @@ export type CreateTodoInput = {
 export type UpdateTodoInput = Partial<CreateTodoInput> & {
   status?: TodoStatus;
   completedAt?: string;
+  completedDate?: string;
   deletedAt?: string;
 };

@@ -36,7 +36,7 @@ describe('TodoRepository', () => {
       priority: 2,
       status: 'pending',
     });
-    expect(database.runAsync).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO todos'), expect.any(String), 'Buy milk', 'Whole', 2, 'pending', '2026-05-31', null, null, null, expect.any(String), expect.any(String));
+    expect(database.runAsync).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO todos'), expect.any(String), 'Buy milk', 'Whole', 2, 'pending', '2026-05-31', null, null, null, null, expect.any(String), expect.any(String));
   });
 
   it('lists active todos mapped from sqlite rows', async () => {

@@ -201,7 +201,9 @@ export function useHabits() {
           'remindersEnabled' in input ? draft.remindersEnabled ?? false : existing?.remindersEnabled ?? false;
         const settings = await SettingsRepository.get();
 
-        await NotificationService.cancelAsync(existing?.notificationId);
+        if (existing) {
+          await NotificationService.cancelHabitRemindersAsync(existing.id, existing.notificationId);
+        }
         const updatedHabit = await HabitRepository.update(habitId, {
           ...draft,
           reminderTime: nextReminderTime,
@@ -235,7 +237,10 @@ export function useHabits() {
     async (habitId: string) => {
       try {
         setErrorMessage(null);
-        await NotificationService.cancelAsync(habits.find((habit) => habit.id === habitId)?.notificationId);
+        const existing = habits.find((habit) => habit.id === habitId) ?? (await HabitRepository.findById(habitId));
+        if (existing) {
+          await NotificationService.cancelHabitRemindersAsync(existing.id, existing.notificationId);
+        }
         await HabitRepository.deleteById(habitId);
         await loadHabits({ silent: true });
         await loadMonthHistory();
@@ -255,7 +260,9 @@ export function useHabits() {
         setErrorMessage(null);
         const isCompleted = completedHabitIds.has(habitId);
         const habit = habits.find((currentHabit) => currentHabit.id === habitId) ?? (await HabitRepository.findById(habitId));
-        await NotificationService.cancelAsync(habit?.notificationId);
+        if (habit) {
+          await NotificationService.cancelHabitRemindersAsync(habit.id, habit.notificationId);
+        }
         await HabitCompletionRepository.upsert({
           habitId,
           date: todayKey,
@@ -304,7 +311,7 @@ export function useHabits() {
         });
 
         if (habit && dateKey > todayKey) {
-          await NotificationService.cancelAsync(habit.notificationId);
+          await NotificationService.cancelHabitRemindersAsync(habit.id, habit.notificationId);
           const settings = await SettingsRepository.get();
           const notificationId =
             settings.notificationsEnabled && habit.remindersEnabled

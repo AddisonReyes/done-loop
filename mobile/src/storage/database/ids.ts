@@ -1,4 +1,6 @@
 export function createLocalId(prefix: string): string {
-  const random = Math.random().toString(36).slice(2, 10);
-  return `${prefix}_${Date.now().toString(36)}_${random}`;
+  const randomId = globalThis.crypto?.randomUUID?.() ??
+    `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+
+  return `${prefix}_${randomId}`;
 }

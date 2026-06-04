@@ -5,7 +5,9 @@ export const migration009AddSolarAppBackground = {
   name: 'add_solar_app_background',
   async up(database: SQLiteDatabase): Promise<void> {
     await database.execAsync(`
-      CREATE TABLE IF NOT EXISTS user_settings_next (
+      DROP TABLE IF EXISTS user_settings_next;
+
+      CREATE TABLE user_settings_next (
         id INTEGER PRIMARY KEY CHECK (id = 1),
         notifications_enabled INTEGER NOT NULL CHECK (notifications_enabled IN (0, 1)),
         animations_enabled INTEGER NOT NULL DEFAULT 1 CHECK (animations_enabled IN (0, 1)),

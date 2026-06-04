@@ -10,6 +10,7 @@
     "android": {
       "package": "app.dakotitah.doneloop",
       "versionCode": 4,
+      "permissions": ["SCHEDULE_EXACT_ALARM"],
       "adaptiveIcon": {
         "backgroundColor": "#08080A",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

@@ -1,6 +1,6 @@
 import Constants, { AppOwnership } from 'expo-constants';
 import { router } from 'expo-router';
-import { AppState } from 'react-native';
+import { AppState, Platform } from 'react-native';
 
 import { HabitCompletionRepository, HabitRepository } from '@/features/habits/repositories';
 import { getHabitsDueOnDate } from '@/features/habits/services/habit-recurrence';
@@ -9,7 +9,7 @@ import { SettingsRepository } from '@/features/settings/repositories/settings-re
 import type { UserLanguagePreference } from '@/features/settings/types';
 import { translations } from '@/i18n/translations';
 import { emitAppEvent } from '@/shared/events/app-events';
-import { dateKeyToLocalDate, toDateKey } from '@/shared/utils/date';
+import { dateKeyToLocalDate, isDateKey, toDateKey } from '@/shared/utils/date';
 import { parseReminderTime } from './reminder-time';
 
 type NotificationsModule = typeof import('expo-notifications');
@@ -29,17 +29,27 @@ type ScheduleTodoReminderInput = {
 };
 
 const habitReminderCategoryId = 'habit_reminder';
+const androidReminderChannelId = 'done_loop_reminders';
 const markHabitCompleteActionId = 'mark_habit_complete';
 const remindHabitIn30MinutesActionId = 'remind_habit_in_30_minutes';
 const habitReminderLookaheadDays = 370;
+const habitReminderScheduledOccurrences = 14;
 
 let notificationsModuleLoader: NotificationsModuleLoader = () => import('expo-notifications');
 let notificationsModulePromise: Promise<NotificationsModule | null> | null = null;
 let notificationResponseSubscription: { remove: () => void } | null = null;
 let appStateSubscription: { remove: () => void } | null = null;
 
+type NotificationResponse = Parameters<NotificationsModule['addNotificationResponseReceivedListener']>[0] extends (
+  value: infer Response
+) => unknown
+  ? Response
+  : never;
+
 async function getNotificationsModuleAsync(): Promise<NotificationsModule | null> {
-  if (Constants.appOwnership === AppOwnership.Expo) {
+  // Android Expo Go imports expo-notifications push-token side effects and logs a SDK 53+ unsupported warning.
+  // Development/preview/production builds still load the module normally.
+  if (Platform.OS === 'android' && isExpoGo()) {
     return null;
   }
 
@@ -50,11 +60,29 @@ async function getNotificationsModuleAsync(): Promise<NotificationsModule | null
   return notificationsModulePromise;
 }
 
+function isExpoGo(): boolean {
+  return Constants.appOwnership === AppOwnership.Expo;
+}
+
+async function configureAndroidReminderChannelAsync(notifications: NotificationsModule): Promise<void> {
+  if (Platform.OS !== 'android' || isExpoGo() || !('setNotificationChannelAsync' in notifications)) {
+    return;
+  }
+
+  await notifications.setNotificationChannelAsync(androidReminderChannelId, {
+    name: 'Done Loop reminders',
+    importance: notifications.AndroidImportance.DEFAULT,
+    vibrationPattern: [0, 250, 250, 250],
+  });
+}
+
 async function ensurePermissionsAsync(): Promise<boolean> {
   const notifications = await getNotificationsModuleAsync();
   if (!notifications) {
     return false;
   }
+
+  await configureAndroidReminderChannelAsync(notifications);
 
   const existing = await notifications.getPermissionsAsync();
   if (existing.granted) {
@@ -74,13 +102,16 @@ async function isHabitCompletedOnDate(habitId: string, dateKey: string): Promise
   return completion?.completed ?? false;
 }
 
-async function findNextHabitReminderDateAsync(
+async function findHabitReminderDatesAsync(
   habit: Habit,
   reminderTime: NonNullable<ReturnType<typeof parseReminderTime>>,
   fromDate: Date,
-  skipDateKeys: Set<string>
-): Promise<Date | null> {
-  for (let offset = 0; offset <= habitReminderLookaheadDays; offset += 1) {
+  skipDateKeys: Set<string>,
+  limit = habitReminderScheduledOccurrences
+): Promise<Date[]> {
+  const reminderDates: Date[] = [];
+
+  for (let offset = 0; offset <= habitReminderLookaheadDays && reminderDates.length < limit; offset += 1) {
     const candidate = addDays(fromDate, offset);
     const dateKey = toDateKey(candidate);
 
@@ -95,10 +126,10 @@ async function findNextHabitReminderDateAsync(
       continue;
     }
 
-    return reminderDate;
+    reminderDates.push(reminderDate);
   }
 
-  return null;
+  return reminderDates;
 }
 
 async function configureHabitReminderCategoryAsync(
@@ -121,11 +152,12 @@ async function configureHabitReminderCategoryAsync(
   ]);
 }
 
-function getHabitNotificationData(habitId: string, language: UserLanguagePreference) {
+function getHabitNotificationData(habitId: string, language: UserLanguagePreference, dateKey: string) {
   return {
     type: 'habit_reminder',
     habitId,
     language,
+    dateKey,
   };
 }
 
@@ -136,24 +168,35 @@ function getTodoNotificationData(language: UserLanguagePreference) {
   };
 }
 
-function getHabitIdFromResponse(response: Parameters<NotificationsModule['addNotificationResponseReceivedListener']>[0] extends (value: infer Response) => unknown ? Response : never): string | null {
+function getHabitIdFromResponse(response: NotificationResponse): string | null {
   const data = response.notification.request.content.data;
   const habitId = data?.habitId;
   return typeof habitId === 'string' ? habitId : null;
 }
 
-function getNotificationTypeFromResponse(
-  response: Parameters<NotificationsModule['addNotificationResponseReceivedListener']>[0] extends (value: infer Response) => unknown ? Response : never
-): string | null {
+function getNotificationTypeFromResponse(response: NotificationResponse): string | null {
   const type = response.notification.request.content.data?.type;
   return typeof type === 'string' ? type : null;
 }
 
-function getLanguageFromResponse(
-  response: Parameters<NotificationsModule['addNotificationResponseReceivedListener']>[0] extends (value: infer Response) => unknown ? Response : never
-): UserLanguagePreference {
+function getLanguageFromResponse(response: NotificationResponse): UserLanguagePreference {
   const data = response.notification.request.content.data;
   return data?.language === 'es' ? 'es' : 'en';
+}
+
+function getDateKeyFromResponse(response: NotificationResponse): string | null {
+  const dateKey = response.notification.request.content.data?.dateKey;
+  return typeof dateKey === 'string' && isDateKey(dateKey) ? dateKey : null;
+}
+
+function getScheduledNotificationData(notification: unknown): Record<string, unknown> | null {
+  const data = (notification as { content?: { data?: unknown } }).content?.data;
+  return data && typeof data === 'object' ? (data as Record<string, unknown>) : null;
+}
+
+function getScheduledNotificationId(notification: unknown): string | null {
+  const identifier = (notification as { identifier?: unknown }).identifier;
+  return typeof identifier === 'string' ? identifier : null;
 }
 
 async function dismissNotificationAsync(
@@ -175,32 +218,35 @@ async function handleHabitCompletionActionAsync(
   notifications: NotificationsModule,
   habitId: string,
   notificationId: string,
-  language: UserLanguagePreference
+  language: UserLanguagePreference,
+  dateKey: string
 ): Promise<void> {
   const habit = await HabitRepository.findById(habitId);
-  const todayKey = toDateKey(new Date());
 
-  if (!habit || getHabitsDueOnDate([habit], todayKey).length === 0) {
+  if (!habit || getHabitsDueOnDate([habit], dateKey).length === 0) {
     return;
   }
 
   await HabitCompletionRepository.upsert({
     habitId,
-    date: todayKey,
+    date: dateKey,
     completed: true,
   });
   await dismissNotificationAsync(notifications, notificationId);
   const settings = await SettingsRepository.get();
   if (!settings.notificationsEnabled) {
     await HabitRepository.update(habitId, { notificationId: undefined });
+    await NotificationService.cancelHabitRemindersAsync(habitId, notificationId).catch(() => undefined);
     emitAppEvent('habitsChanged');
     return;
   }
 
+  await NotificationService.cancelHabitRemindersAsync(habitId, notificationId).catch(() => undefined);
+
   const nextNotificationId = await NotificationService.scheduleHabitReminderAsync({
     habit,
     language,
-    skipDateKeys: [todayKey],
+    skipDateKeys: [dateKey],
   });
   await HabitRepository.update(habitId, { notificationId: nextNotificationId });
   emitAppEvent('habitsChanged');
@@ -210,15 +256,15 @@ async function handleHabitSnoozeActionAsync(
   notifications: NotificationsModule,
   habitId: string,
   notificationId: string,
-  language: UserLanguagePreference
+  language: UserLanguagePreference,
+  dateKey: string
 ): Promise<void> {
   const habit = await HabitRepository.findById(habitId);
-  const todayKey = toDateKey(new Date());
 
   if (
     !habit ||
-    getHabitsDueOnDate([habit], todayKey).length === 0 ||
-    (await isHabitCompletedOnDate(habitId, todayKey))
+    getHabitsDueOnDate([habit], dateKey).length === 0 ||
+    (await isHabitCompletedOnDate(habitId, dateKey))
   ) {
     return;
   }
@@ -233,10 +279,72 @@ async function handleHabitSnoozeActionAsync(
   const snoozeNotificationId = await NotificationService.scheduleHabitSnoozeReminderAsync({
     habit,
     language,
+    dateKey,
   });
 
   if (snoozeNotificationId) {
     await HabitRepository.update(habitId, { notificationId: snoozeNotificationId });
+  }
+}
+
+async function handleNotificationResponseAsync(
+  notifications: NotificationsModule,
+  response: NotificationResponse
+): Promise<void> {
+  const type = getNotificationTypeFromResponse(response);
+  const habitId = getHabitIdFromResponse(response);
+  const notificationId = response.notification.request.identifier;
+  const language = getLanguageFromResponse(response);
+  const dateKey = getDateKeyFromResponse(response) ?? toDateKey(new Date());
+
+  if (type === 'todo_reminder') {
+    router.navigate('/todos');
+    return;
+  }
+
+  if (!habitId) {
+    return;
+  }
+
+  if (response.actionIdentifier === markHabitCompleteActionId) {
+    await handleHabitCompletionActionAsync(notifications, habitId, notificationId, language, dateKey);
+    return;
+  }
+
+  if (response.actionIdentifier === remindHabitIn30MinutesActionId) {
+    await handleHabitSnoozeActionAsync(notifications, habitId, notificationId, language, dateKey);
+    return;
+  }
+
+  router.navigate('/habits');
+}
+
+async function getLastNotificationResponseAsync(
+  notifications: NotificationsModule
+): Promise<NotificationResponse | null> {
+  const maybeNotifications = notifications as NotificationsModule & {
+    getLastNotificationResponse?: () => NotificationResponse | null;
+    getLastNotificationResponseAsync?: () => Promise<NotificationResponse | null>;
+  };
+
+  if (typeof maybeNotifications.getLastNotificationResponseAsync === 'function') {
+    return maybeNotifications.getLastNotificationResponseAsync();
+  }
+
+  if (typeof maybeNotifications.getLastNotificationResponse === 'function') {
+    return maybeNotifications.getLastNotificationResponse();
+  }
+
+  return null;
+}
+
+async function clearLastNotificationResponseAsync(notifications: NotificationsModule): Promise<void> {
+  const maybeNotifications = notifications as NotificationsModule & {
+    clearLastNotificationResponseAsync?: () => Promise<void> | void;
+  };
+
+  if (typeof maybeNotifications.clearLastNotificationResponseAsync === 'function') {
+    await Promise.resolve(maybeNotifications.clearLastNotificationResponseAsync()).catch(() => undefined);
   }
 }
 
@@ -255,6 +363,7 @@ export const NotificationService = {
         shouldShowList: true,
       }),
     });
+    await configureAndroidReminderChannelAsync(notifications);
     await configureHabitReminderCategoryAsync(notifications, 'en');
 
     return true;
@@ -267,32 +376,14 @@ export const NotificationService = {
     }
 
     notificationResponseSubscription = notifications.addNotificationResponseReceivedListener((response) => {
-      const type = getNotificationTypeFromResponse(response);
-      const habitId = getHabitIdFromResponse(response);
-      const notificationId = response.notification.request.identifier;
-      const language = getLanguageFromResponse(response);
-
-      if (type === 'todo_reminder') {
-        router.navigate('/todos');
-        return;
-      }
-
-      if (!habitId) {
-        return;
-      }
-
-      if (response.actionIdentifier === markHabitCompleteActionId) {
-        void handleHabitCompletionActionAsync(notifications, habitId, notificationId, language);
-        return;
-      }
-
-      if (response.actionIdentifier === remindHabitIn30MinutesActionId) {
-        void handleHabitSnoozeActionAsync(notifications, habitId, notificationId, language);
-        return;
-      }
-
-      router.navigate('/habits');
+      void handleNotificationResponseAsync(notifications, response).catch(() => undefined);
     });
+
+    const initialResponse = await getLastNotificationResponseAsync(notifications).catch(() => null);
+    if (initialResponse) {
+      await handleNotificationResponseAsync(notifications, initialResponse).catch(() => undefined);
+      await clearLastNotificationResponseAsync(notifications);
+    }
 
     return true;
   },
@@ -310,7 +401,7 @@ export const NotificationService = {
   },
 
   async requestPermissionsAsync(): Promise<boolean> {
-    return ensurePermissionsAsync();
+    return ensurePermissionsAsync().catch(() => false);
   },
 
   async scheduleHabitReminderAsync({
@@ -319,69 +410,89 @@ export const NotificationService = {
     fromDate = new Date(),
     skipDateKeys = [],
   }: ScheduleHabitReminderInput): Promise<string | undefined> {
-    const notifications = await getNotificationsModuleAsync();
-    if (!notifications) {
+    try {
+      const notifications = await getNotificationsModuleAsync();
+      if (!notifications) {
+        return undefined;
+      }
+
+      const time = parseReminderTime(habit.reminderTime);
+      if (!time || !(await ensurePermissionsAsync())) {
+        return undefined;
+      }
+
+      await configureAndroidReminderChannelAsync(notifications);
+      await configureHabitReminderCategoryAsync(notifications, language);
+
+      const reminderDates = await findHabitReminderDatesAsync(
+        habit,
+        time,
+        fromDate,
+        new Set(skipDateKeys)
+      );
+
+      if (reminderDates.length === 0) {
+        return undefined;
+      }
+
+      const notificationIds = await Promise.all(
+        reminderDates.map((reminderDate) =>
+          notifications.scheduleNotificationAsync({
+            content: {
+              title: 'Done Loop',
+              body: translations[language].notifications.habitBody.replace('{{habitName}}', habit.name),
+              categoryIdentifier: habitReminderCategoryId,
+              data: getHabitNotificationData(habit.id, language, toDateKey(reminderDate)),
+            },
+            trigger: {
+              type: notifications.SchedulableTriggerInputTypes.DATE,
+              date: reminderDate,
+              channelId: androidReminderChannelId,
+            },
+          })
+        )
+      );
+
+      return notificationIds[0];
+    } catch {
       return undefined;
     }
-
-    const time = parseReminderTime(habit.reminderTime);
-    if (!time || !(await ensurePermissionsAsync())) {
-      return undefined;
-    }
-
-    await configureHabitReminderCategoryAsync(notifications, language);
-
-    const reminderDate = await findNextHabitReminderDateAsync(
-      habit,
-      time,
-      fromDate,
-      new Set(skipDateKeys)
-    );
-
-    if (!reminderDate) {
-      return undefined;
-    }
-
-    return notifications.scheduleNotificationAsync({
-      content: {
-        title: 'Done Loop',
-        body: translations[language].notifications.habitBody.replace('{{habitName}}', habit.name),
-        categoryIdentifier: habitReminderCategoryId,
-        data: getHabitNotificationData(habit.id, language),
-      },
-      trigger: {
-        type: notifications.SchedulableTriggerInputTypes.DATE,
-        date: reminderDate,
-      },
-    });
   },
 
   async scheduleHabitSnoozeReminderAsync({
+    dateKey,
     habit,
     language = 'en',
   }: {
     habit: Habit;
     language?: UserLanguagePreference;
+    dateKey?: string;
   }): Promise<string | undefined> {
-    const notifications = await getNotificationsModuleAsync();
-    if (!notifications || !(await ensurePermissionsAsync())) {
+    try {
+      const notifications = await getNotificationsModuleAsync();
+      if (!notifications || !(await ensurePermissionsAsync())) {
+        return undefined;
+      }
+
+      await configureAndroidReminderChannelAsync(notifications);
+      await configureHabitReminderCategoryAsync(notifications, language);
+
+      return notifications.scheduleNotificationAsync({
+        content: {
+          title: 'Done Loop',
+          body: translations[language].notifications.habitBody.replace('{{habitName}}', habit.name),
+          categoryIdentifier: habitReminderCategoryId,
+          data: getHabitNotificationData(habit.id, language, dateKey ?? toDateKey(new Date())),
+        },
+        trigger: {
+          type: notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+          seconds: 30 * 60,
+          channelId: androidReminderChannelId,
+        },
+      });
+    } catch {
       return undefined;
     }
-
-    await configureHabitReminderCategoryAsync(notifications, language);
-
-    return notifications.scheduleNotificationAsync({
-      content: {
-        title: 'Done Loop',
-        body: translations[language].notifications.habitBody.replace('{{habitName}}', habit.name),
-        categoryIdentifier: habitReminderCategoryId,
-        data: getHabitNotificationData(habit.id, language),
-      },
-      trigger: {
-        type: notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-        seconds: 30 * 60,
-      },
-    });
   },
 
   async scheduleTodoReminderAsync({
@@ -389,33 +500,40 @@ export const NotificationService = {
     dueAt,
     language = 'en',
   }: ScheduleTodoReminderInput): Promise<string | undefined> {
-    const notifications = await getNotificationsModuleAsync();
-    if (!notifications || !dueAt || !(await ensurePermissionsAsync())) {
+    try {
+      const notifications = await getNotificationsModuleAsync();
+      if (!notifications || !dueAt || !(await ensurePermissionsAsync())) {
+        return undefined;
+      }
+
+      await configureAndroidReminderChannelAsync(notifications);
+
+      const dueDate = dateKeyToLocalDate(dueAt);
+      if (!dueDate) {
+        return undefined;
+      }
+
+      dueDate.setHours(9, 0, 0, 0);
+
+      if (dueDate.getTime() <= Date.now()) {
+        return undefined;
+      }
+
+      return notifications.scheduleNotificationAsync({
+        content: {
+          title: translations[language].notifications.todoTitle,
+          body: title,
+          data: getTodoNotificationData(language),
+        },
+        trigger: {
+          type: notifications.SchedulableTriggerInputTypes.DATE,
+          date: dueDate,
+          channelId: androidReminderChannelId,
+        },
+      });
+    } catch {
       return undefined;
     }
-
-    const dueDate = dateKeyToLocalDate(dueAt);
-    if (!dueDate) {
-      return undefined;
-    }
-
-    dueDate.setHours(9, 0, 0, 0);
-
-    if (dueDate.getTime() <= Date.now()) {
-      return undefined;
-    }
-
-    return notifications.scheduleNotificationAsync({
-      content: {
-        title: translations[language].notifications.todoTitle,
-        body: title,
-        data: getTodoNotificationData(language),
-      },
-      trigger: {
-        type: notifications.SchedulableTriggerInputTypes.DATE,
-        date: dueDate,
-      },
-    });
   },
 
   async cancelAsync(notificationId?: string): Promise<void> {
@@ -424,8 +542,41 @@ export const NotificationService = {
       return;
     }
 
-    await notifications.cancelScheduledNotificationAsync(notificationId);
+    await Promise.resolve(notifications.cancelScheduledNotificationAsync(notificationId)).catch(() => undefined);
     await dismissNotificationAsync(notifications, notificationId);
+  },
+
+  async cancelHabitRemindersAsync(habitId: string, fallbackNotificationId?: string): Promise<void> {
+    const notifications = await getNotificationsModuleAsync();
+    if (!notifications) {
+      return;
+    }
+
+    if (fallbackNotificationId) {
+      await NotificationService.cancelAsync(fallbackNotificationId);
+    }
+
+    const getAllScheduled = (notifications as NotificationsModule & {
+      getAllScheduledNotificationsAsync?: () => Promise<unknown[]>;
+    }).getAllScheduledNotificationsAsync;
+
+    if (typeof getAllScheduled !== 'function') {
+      return;
+    }
+
+    const scheduledNotifications = await getAllScheduled.call(notifications).catch(() => []);
+    await Promise.all(
+      scheduledNotifications.map(async (notification) => {
+        const data = getScheduledNotificationData(notification);
+        const notificationId = getScheduledNotificationId(notification);
+
+        if (data?.type !== 'habit_reminder' || data.habitId !== habitId || !notificationId) {
+          return;
+        }
+
+        await Promise.resolve(notifications.cancelScheduledNotificationAsync(notificationId)).catch(() => undefined);
+      })
+    );
   },
 
   async cancelAllAsync(): Promise<void> {
@@ -434,7 +585,7 @@ export const NotificationService = {
       return;
     }
 
-    await notifications.cancelAllScheduledNotificationsAsync();
+    await Promise.resolve(notifications.cancelAllScheduledNotificationsAsync()).catch(() => undefined);
     if (hasDismissAllNotificationsAsync(notifications)) {
       await Promise.resolve(notifications.dismissAllNotificationsAsync()).catch(() => undefined);
     }

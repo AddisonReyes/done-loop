@@ -6,8 +6,11 @@ import {
   toSQLiteBoolean,
 } from '@/storage/database/sqlite-mappers';
 import { getDatabaseAsync } from '@/storage/database/client';
+import { isDateKey, toDateKey } from '@/shared/utils/date';
 
 import type { CreateHabitInput, Habit, HabitRecurrenceType, UpdateHabitInput } from '../types';
+
+const recurrenceTypes = new Set<HabitRecurrenceType>(['daily', 'weekly', 'monthly', 'custom']);
 
 type HabitRow = {
   id: string;
@@ -21,6 +24,7 @@ type HabitRow = {
   reminders_enabled: number;
   notification_id?: string | null;
   is_active: number;
+  start_date?: string | null;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
@@ -30,19 +34,29 @@ function serializeNumberList(values: number[] | undefined): string | null {
   return values && values.length > 0 ? JSON.stringify(values) : null;
 }
 
-function parseNumberList(value: string | null | undefined): number[] | undefined {
+function parseNumberList(value: string | null | undefined, min: number, max: number): number[] | undefined {
   if (!value) {
     return undefined;
   }
 
   try {
     const parsed: unknown = JSON.parse(value);
-    return Array.isArray(parsed) && parsed.every((item) => Number.isInteger(item))
-      ? parsed
-      : undefined;
+    if (!Array.isArray(parsed)) {
+      return undefined;
+    }
+
+    const normalized = [...new Set(parsed)]
+      .filter((item): item is number => Number.isInteger(item) && item >= min && item <= max)
+      .sort((a, b) => a - b);
+
+    return normalized.length > 0 ? normalized : undefined;
   } catch {
     return undefined;
   }
+}
+
+function toRecurrenceType(value: HabitRecurrenceType): HabitRecurrenceType {
+  return recurrenceTypes.has(value) ? value : 'daily';
 }
 
 function mapHabitRow(row: HabitRow): Habit {
@@ -50,14 +64,18 @@ function mapHabitRow(row: HabitRow): Habit {
     id: row.id,
     name: row.name,
     description: optionalString(row.description),
-    recurrenceType: row.recurrence_type,
-    customIntervalDays: row.custom_interval_days ?? undefined,
-    weeklyDays: parseNumberList(row.weekly_days),
-    monthlyDays: parseNumberList(row.monthly_days),
+    recurrenceType: toRecurrenceType(row.recurrence_type),
+    customIntervalDays:
+      Number.isInteger(row.custom_interval_days) && row.custom_interval_days && row.custom_interval_days > 0
+        ? row.custom_interval_days
+        : undefined,
+    weeklyDays: parseNumberList(row.weekly_days, 1, 7),
+    monthlyDays: parseNumberList(row.monthly_days, 1, 31),
     reminderTime: optionalString(row.reminder_time),
     remindersEnabled: fromSQLiteBoolean(row.reminders_enabled),
     notificationId: optionalString(row.notification_id ?? null),
     isActive: fromSQLiteBoolean(row.is_active),
+    startDate: isDateKey(row.start_date ?? undefined) ? row.start_date ?? undefined : undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     deletedAt: optionalString(row.deleted_at),
@@ -80,6 +98,7 @@ export const HabitRepository = {
       remindersEnabled: input.remindersEnabled ?? false,
       notificationId: input.notificationId,
       isActive: input.isActive ?? true,
+      startDate: isDateKey(input.startDate) ? input.startDate : toDateKey(new Date()),
       createdAt: now,
       updatedAt: now,
     };
@@ -97,10 +116,11 @@ export const HabitRepository = {
         reminders_enabled,
         notification_id,
         is_active,
+        start_date,
         created_at,
         updated_at,
         deleted_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
       habit.id,
       habit.name,
       nullableString(habit.description),
@@ -112,6 +132,7 @@ export const HabitRepository = {
       toSQLiteBoolean(habit.remindersEnabled),
       nullableString(habit.notificationId),
       toSQLiteBoolean(habit.isActive),
+      nullableString(habit.startDate),
       habit.createdAt,
       habit.updatedAt,
       nullableString(habit.deletedAt)
@@ -167,10 +188,11 @@ export const HabitRepository = {
            monthly_days = ?,
            reminder_time = ?,
            reminders_enabled = ?,
-           notification_id = ?,
-           is_active = ?,
-           updated_at = ?,
-           deleted_at = ?
+            notification_id = ?,
+            is_active = ?,
+            start_date = ?,
+            updated_at = ?,
+            deleted_at = ?
        WHERE id = ?;`,
       next.name,
       nullableString(next.description),
@@ -182,6 +204,7 @@ export const HabitRepository = {
       toSQLiteBoolean(next.remindersEnabled),
       nullableString(next.notificationId),
       toSQLiteBoolean(next.isActive),
+      nullableString(next.startDate),
       next.updatedAt,
       nullableString(next.deletedAt),
       id
@@ -202,5 +225,16 @@ export const HabitRepository = {
       id
     );
     return result.changes > 0;
+  },
+
+  async clearAllNotificationIds(): Promise<number> {
+    const database = await getDatabaseAsync();
+    const result = await database.runAsync(
+      `UPDATE habits
+       SET notification_id = NULL, updated_at = ?
+       WHERE notification_id IS NOT NULL;`,
+      new Date().toISOString()
+    );
+    return result.changes;
   },
 };

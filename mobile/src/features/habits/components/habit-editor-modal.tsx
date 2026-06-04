@@ -54,6 +54,14 @@ function getHabitCreatedDate(habit: Habit | null | undefined): Date | null {
     return null;
   }
 
+  if (habit.startDate) {
+    const [year, month, day] = habit.startDate.split('-').map(Number);
+    const startDate = new Date(year, month - 1, day);
+    if (!Number.isNaN(startDate.getTime())) {
+      return startDate;
+    }
+  }
+
   const date = new Date(habit.createdAt);
   return Number.isNaN(date.getTime()) ? null : date;
 }
@@ -133,7 +141,13 @@ function HabitEditorForm({ habit, onSubmit }: Pick<HabitEditorModalProps, 'habit
     remindersEnabled: habit?.remindersEnabled ?? false,
     reminderTime: habit?.reminderTime,
   });
-  const disabled = draft.name.trim().length === 0 || (draft.remindersEnabled && !draft.reminderTime);
+  const customIntervalValue = Number(draft.customIntervalDays);
+  const hasValidCustomInterval =
+    draft.recurrenceType !== 'custom' || (Number.isInteger(customIntervalValue) && customIntervalValue > 0);
+  const disabled =
+    draft.name.trim().length === 0 ||
+    !hasValidCustomInterval ||
+    (draft.remindersEnabled && !draft.reminderTime);
   const monthlyLimitReached = draft.monthlyDays.length >= maxMonthlyRecurrenceItems;
   const recurrenceOptions = recurrenceTypes.map((recurrenceType) => ({
     value: recurrenceType,
@@ -350,23 +364,30 @@ function HabitEditorForm({ habit, onSubmit }: Pick<HabitEditorModalProps, 'habit
           </View>
         ) : null}
         {draft.recurrenceType === 'custom' ? (
-          <View
-            style={[
-              styles.intervalInputRow,
-              { backgroundColor: theme.surfaceStrong, borderColor: theme.border },
-            ]}>
-            <TextInput
-              accessibilityLabel={t('habits.customInterval')}
-              placeholder="3"
-              placeholderTextColor={theme.textSecondary}
-              keyboardType="number-pad"
-              value={draft.customIntervalDays}
-              onChangeText={(customIntervalDays) => setDraft((current) => ({ ...current, customIntervalDays }))}
-              style={[styles.intervalInput, { color: theme.text }]}
-            />
-            <ThemedText type="smallBold" themeColor="textSecondary">
-              {t('habits.customIntervalUnit')}
-            </ThemedText>
+          <View style={styles.selectorGroup}>
+            <View
+              style={[
+                styles.intervalInputRow,
+                { backgroundColor: theme.surfaceStrong, borderColor: theme.border },
+              ]}>
+              <TextInput
+                accessibilityLabel={t('habits.customInterval')}
+                placeholder="3"
+                placeholderTextColor={theme.textSecondary}
+                keyboardType="number-pad"
+                value={draft.customIntervalDays}
+                onChangeText={(customIntervalDays) => setDraft((current) => ({ ...current, customIntervalDays }))}
+                style={[styles.intervalInput, { color: theme.text }]}
+              />
+              <ThemedText type="smallBold" themeColor="textSecondary">
+                {t('habits.customIntervalUnit')}
+              </ThemedText>
+            </View>
+            {!hasValidCustomInterval ? (
+              <ThemedText type="small" themeColor="warning">
+                {t('habits.customIntervalRequired')}
+              </ThemedText>
+            ) : null}
           </View>
         ) : null}
         <View style={styles.switchRow}>
@@ -389,6 +410,7 @@ function HabitEditorForm({ habit, onSubmit }: Pick<HabitEditorModalProps, 'habit
         ) : null}
         <Pressable
           accessibilityRole="button"
+          accessibilityState={{ disabled }}
           disabled={disabled}
           onPress={() =>
             onSubmit({
@@ -489,6 +511,7 @@ const styles = StyleSheet.create({
   },
   dayRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: Spacing.one,
   },
   dayChip: {
@@ -497,8 +520,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     flex: 1,
     justifyContent: 'center',
-    minHeight: 40,
-    minWidth: 0,
+    minHeight: 44,
+    minWidth: 44,
     paddingHorizontal: Spacing.one,
   },
   monthlyHeader: {

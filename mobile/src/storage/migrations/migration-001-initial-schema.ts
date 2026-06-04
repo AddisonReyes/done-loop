@@ -17,6 +17,7 @@ export const migration001InitialSchema = {
         reminders_enabled INTEGER NOT NULL CHECK (reminders_enabled IN (0, 1)),
         notification_id TEXT,
         is_active INTEGER NOT NULL CHECK (is_active IN (0, 1)),
+        start_date TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         deleted_at TEXT
@@ -47,6 +48,7 @@ export const migration001InitialSchema = {
         status TEXT NOT NULL CHECK (status IN ('pending', 'completed', 'deleted')),
         due_at TEXT,
         completed_at TEXT,
+        completed_date TEXT,
         deleted_at TEXT,
         notification_id TEXT,
         created_at TEXT NOT NULL,

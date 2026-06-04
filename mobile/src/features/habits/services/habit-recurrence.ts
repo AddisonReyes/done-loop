@@ -2,6 +2,10 @@ import type { Habit } from '@/features/habits/types';
 import { dateKeyToUtcDayNumber, isDateKey, toDateKey } from '@/shared/utils/date';
 
 function getHabitStartDateKey(habit: Habit): string | null {
+  if (isDateKey(habit.startDate)) {
+    return habit.startDate;
+  }
+
   const createdAt = new Date(habit.createdAt);
 
   if (Number.isNaN(createdAt.getTime())) {

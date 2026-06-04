@@ -9,6 +9,7 @@ import { migration007AddAppBackgroundSetting } from "./migration-007-add-app-bac
 import { migration008AddAnimationsEnabledSetting } from "./migration-008-add-animations-enabled-setting";
 import { migration009AddSolarAppBackground } from "./migration-009-add-solar-app-background";
 import { migration010AddHabitRecurrenceDays } from "./migration-010-add-habit-recurrence-days";
+import { migration011AddLocalDateKeys } from "./migration-011-add-local-date-keys";
 
 function createMigrationDatabase(appliedIds: number[] = []) {
   const rows = appliedIds.map((id) => ({ id }));
@@ -51,7 +52,7 @@ describe("migrations", () => {
 
     await runMigrationsAsync(database as unknown as SQLiteDatabase);
 
-    expect(database.withTransactionAsync).toHaveBeenCalledTimes(10);
+    expect(database.withTransactionAsync).toHaveBeenCalledTimes(11);
     expect(database.runAsync).toHaveBeenCalledWith(
       "INSERT INTO schema_migrations (id, name, applied_at) VALUES (?, ?, ?);",
       1,
@@ -61,7 +62,7 @@ describe("migrations", () => {
   });
 
   it("skips migrations that are already applied", async () => {
-    const database = createMigrationDatabase([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    const database = createMigrationDatabase([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
 
     await runMigrationsAsync(database as unknown as SQLiteDatabase);
 
@@ -78,6 +79,8 @@ describe("migrations", () => {
       "animations_enabled",
       "weekly_days",
       "monthly_days",
+      "start_date",
+      "completed_date",
     ]);
 
     await migration002AddLanguageSetting.up(
@@ -99,6 +102,9 @@ describe("migrations", () => {
       database as unknown as SQLiteDatabase,
     );
     await migration010AddHabitRecurrenceDays.up(
+      database as unknown as SQLiteDatabase,
+    );
+    await migration011AddLocalDateKeys.up(
       database as unknown as SQLiteDatabase,
     );
 
@@ -145,6 +151,21 @@ describe("migrations", () => {
     );
     expect(database.execAsync).toHaveBeenCalledWith(
       expect.stringContaining("ADD COLUMN monthly_days"),
+    );
+  });
+
+  it("adds local date key columns when they are missing", async () => {
+    const database = createTableInfoDatabase([]);
+
+    await migration011AddLocalDateKeys.up(
+      database as unknown as SQLiteDatabase,
+    );
+
+    expect(database.execAsync).toHaveBeenCalledWith(
+      expect.stringContaining("ADD COLUMN start_date"),
+    );
+    expect(database.execAsync).toHaveBeenCalledWith(
+      expect.stringContaining("ADD COLUMN completed_date"),
     );
   });
 });

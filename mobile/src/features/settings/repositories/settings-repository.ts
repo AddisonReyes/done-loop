@@ -45,15 +45,21 @@ const defaultSettings: UserSettings = {
   termsUrl: TermsUrl,
 };
 
+const themePreferences = new Set<UserThemePreference>(['system', 'light', 'dark']);
+const accentColorPreferences = new Set<UserAccentColorPreference>(['purple', 'blue', 'green', 'red', 'yellow', 'pink']);
+const appBackgroundPreferences = new Set<UserAppBackgroundPreference>(['none', 'gradient', 'grid', 'solar']);
+const languagePreferences = new Set<UserLanguagePreference>(['en', 'es']);
+const dateFormatPreferences = new Set<UserDateFormatPreference>(['iso', 'mdy', 'dmy', 'long']);
+
 function mapUserSettingsRow(row: UserSettingsRow): UserSettings {
   return {
     notificationsEnabled: fromSQLiteBoolean(row.notifications_enabled),
     animationsEnabled: fromSQLiteBoolean(row.animations_enabled),
-    theme: row.theme,
-    accentColor: row.accent_color,
-    appBackground: row.app_background,
-    language: row.language,
-    dateFormat: row.date_format,
+    theme: themePreferences.has(row.theme) ? row.theme : defaultSettings.theme,
+    accentColor: accentColorPreferences.has(row.accent_color) ? row.accent_color : defaultSettings.accentColor,
+    appBackground: appBackgroundPreferences.has(row.app_background) ? row.app_background : defaultSettings.appBackground,
+    language: languagePreferences.has(row.language) ? row.language : defaultSettings.language,
+    dateFormat: dateFormatPreferences.has(row.date_format) ? row.date_format : defaultSettings.dateFormat,
     privacyPolicyUrl: optionalString(row.privacy_policy_url) ?? PrivacyPolicyUrl,
     termsUrl: optionalString(row.terms_url) ?? TermsUrl,
   };

@@ -104,6 +104,7 @@ function TodoEditorForm({
         />
         <Pressable
           accessibilityRole="button"
+          accessibilityState={{ disabled }}
           disabled={disabled}
           onPress={() =>
             onSubmit({
@@ -206,7 +207,7 @@ const styles = StyleSheet.create({
     flexBasis: '30%',
     flex: 1,
     justifyContent: 'center',
-    minHeight: 40,
+    minHeight: 44,
     minWidth: 90,
     paddingHorizontal: Spacing.two,
   },

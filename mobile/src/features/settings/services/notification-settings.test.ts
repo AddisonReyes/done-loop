@@ -8,6 +8,7 @@ import { setNotificationsEnabledPreferenceAsync } from './notification-settings'
 
 jest.mock('@/features/habits/repositories', () => ({
   HabitRepository: {
+    clearAllNotificationIds: jest.fn(),
     listActive: jest.fn(),
     update: jest.fn(),
   },
@@ -15,6 +16,7 @@ jest.mock('@/features/habits/repositories', () => ({
 
 jest.mock('@/features/todos/repositories', () => ({
   TodoRepository: {
+    clearAllNotificationIds: jest.fn(),
     listActive: jest.fn(),
     update: jest.fn(),
   },
@@ -55,7 +57,9 @@ const disabledSettings: UserSettings = {
 describe('setNotificationsEnabledPreferenceAsync', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.mocked(HabitRepository.clearAllNotificationIds).mockResolvedValue(0);
     jest.mocked(HabitRepository.listActive).mockResolvedValue([]);
+    jest.mocked(TodoRepository.clearAllNotificationIds).mockResolvedValue(0);
     jest.mocked(TodoRepository.listActive).mockResolvedValue([]);
     jest.mocked(SettingsRepository.update).mockImplementation(async (input) => ({
       ...enabledSettings,
@@ -135,6 +139,8 @@ describe('setNotificationsEnabledPreferenceAsync', () => {
     await expect(setNotificationsEnabledPreferenceAsync(false, 'en')).resolves.toEqual(disabledSettings);
 
     expect(NotificationService.cancelAllAsync).toHaveBeenCalledTimes(1);
+    expect(HabitRepository.clearAllNotificationIds).toHaveBeenCalledTimes(1);
+    expect(TodoRepository.clearAllNotificationIds).toHaveBeenCalledTimes(1);
     expect(NotificationService.requestPermissionsAsync).not.toHaveBeenCalled();
     expect(SettingsRepository.update).toHaveBeenCalledWith({ notificationsEnabled: false });
   });

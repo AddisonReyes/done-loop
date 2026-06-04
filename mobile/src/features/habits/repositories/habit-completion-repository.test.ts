@@ -101,6 +101,24 @@ describe('HabitCompletionRepository', () => {
     );
   });
 
+  it('rejects invalid completion dates before writing', async () => {
+    await expect(
+      HabitCompletionRepository.upsert({
+        habitId: 'habit_1',
+        date: '2026-02-31',
+        completed: true,
+      })
+    ).rejects.toThrow('Invalid habit completion date.');
+    expect(mockedGetDatabaseAsync).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid date range boundaries before querying', async () => {
+    await expect(HabitCompletionRepository.listByDateRange('2026-05-01', 'bad-date')).rejects.toThrow(
+      'Invalid habit completion date range.'
+    );
+    expect(mockedGetDatabaseAsync).not.toHaveBeenCalled();
+  });
+
   it('deletes completions by habit id', async () => {
     const database = {
       runAsync: jest.fn(async () => ({ changes: 2, lastInsertRowId: 1 })),
