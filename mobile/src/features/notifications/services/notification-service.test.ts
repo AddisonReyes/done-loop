@@ -1,3 +1,6 @@
+import Constants, { AppOwnership } from 'expo-constants';
+import { Platform } from 'react-native';
+
 import {
   NotificationService,
   resetNotificationModuleLoaderForTests,
@@ -137,6 +140,22 @@ describe('NotificationService', () => {
     ).resolves.toBeUndefined();
     await expect(NotificationService.requestPermissionsAsync()).resolves.toBe(false);
     await expect(NotificationService.cancelAllAsync()).resolves.toBeUndefined();
+  });
+
+  it('does not import expo-notifications in Android Expo Go', async () => {
+    const loader = jest.fn(async () => notifications);
+    const originalAppOwnership = Constants.appOwnership;
+    const originalPlatformOS = Platform.OS;
+    Object.defineProperty(Constants, 'appOwnership', { configurable: true, value: AppOwnership.Expo });
+    Object.defineProperty(Platform, 'OS', { configurable: true, value: 'android' });
+    setNotificationModuleLoaderForTests(loader);
+
+    await expect(NotificationService.requestPermissionsAsync()).resolves.toBe(false);
+
+    expect(loader).not.toHaveBeenCalled();
+
+    Object.defineProperty(Constants, 'appOwnership', { configurable: true, value: originalAppOwnership });
+    Object.defineProperty(Platform, 'OS', { configurable: true, value: originalPlatformOS });
   });
 
   it('does not schedule todo reminders for past dates', async () => {
