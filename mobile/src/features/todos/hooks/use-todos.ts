@@ -135,10 +135,11 @@ export function useTodos() {
       try {
         setErrorMessage(null);
         await NotificationService.cancelAsync(todo.notificationId);
+        const completedAt = new Date().toISOString();
         await TodoRepository.update(todo.id, {
           status: 'completed',
-          completedAt: new Date().toISOString(),
-          completedDate: toDateKey(new Date()),
+          completedAt,
+          completedDate: todayKey,
           notificationId: undefined,
         });
         await loadTodos({ silent: true });
@@ -149,7 +150,7 @@ export function useTodos() {
         return false;
       }
     },
-    [loadTodos, t]
+    [loadTodos, t, todayKey]
   );
 
   const reopenTodo = useCallback(
