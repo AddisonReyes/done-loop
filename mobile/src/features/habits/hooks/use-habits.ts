@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import type { HabitDayActivity } from '@/features/habits/components/habit-month-history';
+import type { HabitDayActivity, HabitDayIntensity } from '@/features/habits/components/habit-month-history';
 import { HabitCompletionRepository, HabitRepository } from '@/features/habits/repositories';
 import { NotificationService } from '@/features/notifications/services/notification-service';
 import { SettingsRepository } from '@/features/settings/repositories/settings-repository';
@@ -24,6 +24,28 @@ type AsyncStatus = 'idle' | 'loading' | 'error';
 type LoadOptions = {
   silent?: boolean;
 };
+
+export function getHabitDayIntensity(completedCount: number, scheduledCount: number): HabitDayIntensity {
+  if (completedCount <= 0 || scheduledCount <= 0) {
+    return 0;
+  }
+
+  if (completedCount >= scheduledCount) {
+    return 4;
+  }
+
+  const completionRatio = completedCount / scheduledCount;
+
+  if (completionRatio < 0.25) {
+    return 1;
+  }
+
+  if (completionRatio < 0.5) {
+    return 2;
+  }
+
+  return 3;
+}
 
 export function useHabits() {
   const { language, locale, t } = useTranslation();
@@ -366,17 +388,21 @@ export function useHabits() {
 
     return monthDateKeys.map((dateKey) => {
       const completedCount = completionsByDate.get(dateKey) ?? 0;
-      const activeHabitCount = habitIdsByDate.get(dateKey)?.size ?? 0;
+      const scheduledCount = habitIdsByDate.get(dateKey)?.size ?? 0;
+      const intensity = getHabitDayIntensity(completedCount, scheduledCount);
       let activity: HabitDayActivity = 'none';
 
-      if (completedCount > 0 && activeHabitCount > 0) {
-        activity = completedCount >= activeHabitCount ? 'complete' : 'partial';
+      if (intensity > 0) {
+        activity = intensity === 4 ? 'complete' : 'partial';
       }
 
       return {
         dateKey,
         dayNumber: Number(dateKey.slice(8, 10)),
         activity,
+        completedCount,
+        scheduledCount,
+        intensity,
       };
     });
   }, [habits, monthCompletions, monthDateKeys]);

@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { ComponentProps } from 'react';
 import { useEffect } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, type AccessibilityRole, type AccessibilityState, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
@@ -66,32 +66,20 @@ export function HabitListItem({
         animationsEnabled && cardAnimatedStyle,
       ]}>
       <View style={styles.header}>
-        <View style={styles.titleGroup}>
-          <Pressable
+        <ThemedText type="smallBold" style={[styles.title, completedToday && styles.completedTitle]}>
+          {habit.name}
+        </ThemedText>
+
+        <View style={styles.actions}>
+          <IconAction
             accessibilityRole="checkbox"
             accessibilityState={{ checked: completedToday, disabled: completionDisabled }}
             disabled={completionDisabled}
+            iconName={completedToday ? 'close' : 'check-circle-outline'}
+            label={statusLabel}
             onPress={onToggleToday}
-            style={[
-              styles.check,
-              completionDisabled && styles.disabledCheck,
-              {
-                borderColor: completedToday ? theme.accentStrong : theme.border,
-                backgroundColor: completedToday ? theme.accent : theme.backgroundSelected,
-              },
-            ]}>
-            <ThemedText type="smallBold" style={completedToday && styles.checkText}>
-              {completedToday ? '✓' : ''}
-            </ThemedText>
-          </Pressable>
-
-          <ThemedText type="smallBold" style={[styles.title, completedToday && styles.completedTitle]}>
-            {habit.name}
-          </ThemedText>
-        </View>
-
-        <View style={styles.actions}>
-          <IconAction iconName="pencil-outline" label={t('habits.edit')} onPress={onStartEdit} />
+          />
+          <IconAction iconName="pencil-outline" label={t('habits.edit')} muted onPress={onStartEdit} />
           <IconAction iconName="trash-can-outline" label={t('habits.delete')} muted onPress={onDelete} />
         </View>
       </View>
@@ -121,13 +109,24 @@ export function HabitListItem({
 type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 
 type IconActionProps = {
+  accessibilityRole?: AccessibilityRole;
+  accessibilityState?: AccessibilityState;
+  disabled?: boolean;
   iconName: IconName;
   label: string;
   muted?: boolean;
   onPress: () => void;
 };
 
-function IconAction({ iconName, label, muted, onPress }: IconActionProps) {
+function IconAction({
+  accessibilityRole = 'button',
+  accessibilityState,
+  disabled = false,
+  iconName,
+  label,
+  muted,
+  onPress,
+}: IconActionProps) {
   const theme = useTheme();
   const { animationsEnabled } = useThemePreference();
   const buttonScale = useSharedValue(1);
@@ -145,12 +144,14 @@ function IconAction({ iconName, label, muted, onPress }: IconActionProps) {
 
   return (
     <Pressable
-      accessibilityRole="button"
+      accessibilityRole={accessibilityRole}
       accessibilityLabel={label}
+      accessibilityState={accessibilityState}
+      disabled={disabled}
       onPressIn={() => setPressed(true)}
       onPressOut={() => setPressed(false)}
       onPress={onPress}
-      style={({ pressed }) => [pressed && styles.pressed]}>
+      style={({ pressed }) => [pressed && styles.pressed, disabled && styles.disabledAction]}>
       <Animated.View
         style={[
           styles.iconButton,
@@ -189,38 +190,16 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   header: {
-    alignItems: 'flex-start',
+    alignItems: 'center',
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     gap: Spacing.two,
   },
-  titleGroup: {
-    alignItems: 'flex-start',
-    flex: 1,
-    flexDirection: 'row',
-    gap: Spacing.two,
-    minWidth: 128,
-  },
   title: {
     flex: 1,
     flexShrink: 1,
-    minWidth: 0,
-  },
-  check: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    borderWidth: 1,
-    alignItems: 'center',
-    flexShrink: 0,
-    justifyContent: 'center',
-  },
-  checkText: {
-    color: '#FFFFFF',
-  },
-  disabledCheck: {
-    opacity: 0.48,
+    minWidth: 120,
   },
   body: {
     gap: Spacing.two,
@@ -264,5 +243,8 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.72,
+  },
+  disabledAction: {
+    opacity: 0.48,
   },
 });

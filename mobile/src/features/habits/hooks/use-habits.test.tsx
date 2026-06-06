@@ -6,7 +6,7 @@ import { NotificationService } from '@/features/notifications/services/notificat
 import { SettingsRepository } from '@/features/settings/repositories/settings-repository';
 import { createTestTranslator as mockCreateTestTranslator } from '@/test/test-utils';
 
-import { useHabits } from './use-habits';
+import { getHabitDayIntensity, useHabits } from './use-habits';
 
 jest.mock('@/features/habits/repositories', () => ({
   HabitCompletionRepository: {
@@ -59,6 +59,25 @@ const dailyHabit: Habit = {
   updatedAt: '2026-06-01T00:00:00.000Z',
 };
 
+function createDailyHabit(id: string): Habit {
+  return {
+    ...dailyHabit,
+    id,
+    name: `Habit ${id}`,
+  };
+}
+
+function createCompletion(habitId: string, date: string): HabitCompletion {
+  return {
+    id: `completion_${habitId}_${date}`,
+    habitId,
+    date,
+    completed: true,
+    createdAt: `${date}T00:00:00.000Z`,
+    updatedAt: `${date}T00:00:00.000Z`,
+  };
+}
+
 describe('useHabits', () => {
   let activeHabits: Habit[];
   let completions: HabitCompletion[];
@@ -98,7 +117,10 @@ describe('useHabits', () => {
       activeHabits = activeHabits.map((habit) => (habit.id === id ? next : habit));
       return next;
     });
-    jest.mocked(HabitCompletionRepository.listByDateRange).mockImplementation(async () => completions);
+    jest.mocked(HabitCompletionRepository.listByDateRange).mockImplementation(
+      async (startDate, endDate) =>
+        completions.filter((completion) => completion.date >= startDate && completion.date <= endDate)
+    );
     jest.mocked(HabitCompletionRepository.upsert).mockImplementation(async (input) => {
       const completion: HabitCompletion = {
         id: 'completion_1',
@@ -193,5 +215,42 @@ describe('useHabits', () => {
       language: 'en',
       skipDateKeys: ['2026-06-03'],
     });
+  });
+
+  it.each([
+    { completedCount: 0, expectedActivity: 'none', expectedIntensity: 0 },
+    { completedCount: 2, expectedActivity: 'partial', expectedIntensity: 1 },
+    { completedCount: 6, expectedActivity: 'partial', expectedIntensity: 3 },
+    { completedCount: 9, expectedActivity: 'complete', expectedIntensity: 4 },
+  ] as const)(
+    'computes month history intensity for $completedCount of 9 completed habits',
+    async ({ completedCount, expectedActivity, expectedIntensity }) => {
+      const date = '2026-06-02';
+      activeHabits = Array.from({ length: 9 }, (_, index) => createDailyHabit(`habit_${index + 1}`));
+      completions = activeHabits
+        .slice(0, completedCount)
+        .map((habit) => createCompletion(habit.id, date));
+
+      const { result } = await renderUseHabits();
+
+      const historyDay = result.current.monthHistoryDays.find((day) => day.dateKey === date);
+
+      expect(historyDay).toEqual(
+        expect.objectContaining({
+          activity: expectedActivity,
+          completedCount,
+          scheduledCount: 9,
+          intensity: expectedIntensity,
+        })
+      );
+    }
+  );
+
+  it('maps completion ratios to GitHub-style intensity buckets', () => {
+    expect(getHabitDayIntensity(0, 9)).toBe(0);
+    expect(getHabitDayIntensity(2, 9)).toBe(1);
+    expect(getHabitDayIntensity(3, 9)).toBe(2);
+    expect(getHabitDayIntensity(6, 9)).toBe(3);
+    expect(getHabitDayIntensity(9, 9)).toBe(4);
   });
 });

@@ -31,7 +31,12 @@ export default function CalendarScreen() {
   const isLoading = habits.isLoading || todos.isLoading;
   const errorMessage = habits.errorMessage ?? todos.errorMessage;
   const selectedHabits = useMemo(
-    () => (selectedDateKey ? habits.getHabitsForDate(selectedDateKey) : []),
+    () =>
+      selectedDateKey
+        ? habits
+            .getHabitsForDate(selectedDateKey)
+            .filter((habit) => habit.recurrenceType !== "daily")
+        : [],
     [habits, selectedDateKey],
   );
   const selectedDateLabel = selectedDateKey

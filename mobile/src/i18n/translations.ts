@@ -100,6 +100,7 @@ export const translations = {
         partial: 'Partial',
         complete: 'Complete',
         dayActivity: '{{date}}: {{activity}}',
+        dayProgress: '{{activity}}, {{completed}} of {{total}} habits completed',
       },
     },
     todos: {
@@ -339,6 +340,7 @@ export const translations = {
         partial: 'Parcial',
         complete: 'Completa',
         dayActivity: '{{date}}: {{activity}}',
+        dayProgress: '{{activity}}, {{completed}} de {{total}} hábitos completados',
       },
     },
     todos: {

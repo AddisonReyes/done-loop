@@ -8,6 +8,10 @@ export const mockTheme = {
   accentStrong: '#6D28D9',
   borderStrong: '#D7C8F7',
   historyEmpty: '#FFFFFF',
+  historyLevel1: 'rgba(168, 85, 247, 0.18)',
+  historyLevel2: 'rgba(168, 85, 247, 0.34)',
+  historyLevel3: 'rgba(168, 85, 247, 0.62)',
+  historyLevel4: '#A855F7',
   historyPartial: 'rgba(168, 85, 247, 0.34)',
   historyComplete: '#A855F7',
 };

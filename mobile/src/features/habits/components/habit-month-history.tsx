@@ -7,16 +7,50 @@ import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/i18n';
 
 export type HabitDayActivity = 'none' | 'partial' | 'complete';
+export type HabitDayIntensity = 0 | 1 | 2 | 3 | 4;
+export type HabitHistoryDay = {
+  dateKey: string;
+  dayNumber: number;
+  activity: HabitDayActivity;
+  completedCount: number;
+  scheduledCount: number;
+  intensity: HabitDayIntensity;
+};
+
+type HabitHistoryTheme = Pick<
+  ReturnType<typeof useTheme>,
+  'historyEmpty' | 'historyLevel1' | 'historyLevel2' | 'historyLevel3' | 'historyLevel4'
+>;
 
 type HabitMonthHistoryProps = {
   monthLabel: string;
-  days: { dateKey: string; dayNumber: number; activity: HabitDayActivity }[];
+  days: HabitHistoryDay[];
   monthlyMarkedDateKeys?: Set<string>;
   selectedDateKey?: string;
   onSelectDate?: (dateKey: string) => void;
   onPreviousMonth: () => void;
   onNextMonth: () => void;
 };
+
+export function getHabitHistoryColor(theme: HabitHistoryTheme, intensity: HabitDayIntensity): string {
+  if (intensity === 4) {
+    return theme.historyLevel4;
+  }
+
+  if (intensity === 3) {
+    return theme.historyLevel3;
+  }
+
+  if (intensity === 2) {
+    return theme.historyLevel2;
+  }
+
+  if (intensity === 1) {
+    return theme.historyLevel1;
+  }
+
+  return theme.historyEmpty;
+}
 
 export function HabitMonthHistory({
   monthLabel,
@@ -65,13 +99,16 @@ export function HabitMonthHistory({
         {days.map((day) => {
           const monthlyMarked = monthlyMarkedDateKeys?.has(day.dateKey) ?? false;
           const selected = selectedDateKey === day.dateKey;
-          const backgroundColor =
-            day.activity === 'complete'
-              ? theme.historyComplete
-              : day.activity === 'partial'
-                ? theme.historyPartial
-                : theme.historyEmpty;
-          const dayTextActive = day.activity !== 'none';
+          const backgroundColor = getHabitHistoryColor(theme, day.intensity);
+          const dayTextHighContrast = day.intensity >= 3;
+          const activityLabel =
+            day.scheduledCount > 0
+              ? t('habits.history.dayProgress', {
+                  activity: t(`habits.history.${day.activity}`),
+                  completed: day.completedCount,
+                  total: day.scheduledCount,
+                })
+              : t(`habits.history.${day.activity}`);
 
           return (
             <Pressable
@@ -80,7 +117,7 @@ export function HabitMonthHistory({
               accessibilityState={onSelectDate ? { selected } : undefined}
               accessibilityLabel={t('habits.history.dayActivity', {
                 date: day.dateKey,
-                activity: t(`habits.history.${day.activity}`),
+                activity: activityLabel,
               })}
               disabled={!onSelectDate}
               onPress={() => onSelectDate?.(day.dateKey)}
@@ -103,7 +140,7 @@ export function HabitMonthHistory({
                     styles.monthlyMarker,
                     {
                       backgroundColor: theme.accentStrong,
-                      borderColor: day.activity !== 'none' ? '#FFFFFF' : theme.backgroundElement,
+                      borderColor: day.intensity > 0 ? '#FFFFFF' : theme.backgroundElement,
                     },
                   ]}
                 />
@@ -112,8 +149,8 @@ export function HabitMonthHistory({
                 type="code"
                 style={[
                   styles.dayNumber,
-                  dayTextActive && styles.activeDayText,
-                  selected && !dayTextActive && { color: theme.accentStrong },
+                  dayTextHighContrast && styles.highContrastDayText,
+                  selected && !dayTextHighContrast && { color: theme.accentStrong },
                 ]}>
                 {day.dayNumber}
               </ThemedText>
@@ -124,17 +161,27 @@ export function HabitMonthHistory({
 
       <View style={styles.legend}>
         <LegendDot label={t('habits.history.none')} color={theme.historyEmpty} borderColor={theme.border} />
-        <LegendDot label={t('habits.history.partial')} color={theme.historyPartial} borderColor={theme.border} />
-        <LegendDot label={t('habits.history.complete')} color={theme.historyComplete} borderColor={theme.border} />
+        <LegendDot
+          label={t('habits.history.partial')}
+          color={[theme.historyLevel1, theme.historyLevel2, theme.historyLevel3]}
+          borderColor={theme.border}
+        />
+        <LegendDot label={t('habits.history.complete')} color={theme.historyLevel4} borderColor={theme.border} />
       </View>
     </View>
   );
 }
 
-function LegendDot({ borderColor, label, color }: { borderColor: string; label: string; color: string }) {
+function LegendDot({ borderColor, label, color }: { borderColor: string; label: string; color: string | string[] }) {
+  const colors = Array.isArray(color) ? color : [color];
+
   return (
     <View style={styles.legendItem}>
-      <View style={[styles.legendDot, { backgroundColor: color, borderColor }]} />
+      <View style={styles.legendDots}>
+        {colors.map((currentColor) => (
+          <View key={currentColor} style={[styles.legendDot, { backgroundColor: currentColor, borderColor }]} />
+        ))}
+      </View>
       <ThemedText type="small" themeColor="textSecondary" style={styles.legendLabel}>
         {label}
       </ThemedText>
@@ -194,7 +241,7 @@ const styles = StyleSheet.create({
   dayNumber: {
     textAlign: 'center',
   },
-  activeDayText: {
+  highContrastDayText: {
     color: '#FFFFFF',
   },
   legend: {
@@ -209,6 +256,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexShrink: 1,
     gap: Spacing.one,
+  },
+  legendDots: {
+    flexDirection: 'row',
+    gap: Spacing.half,
   },
   legendDot: {
     width: 12,

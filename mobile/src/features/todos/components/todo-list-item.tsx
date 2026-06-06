@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   header: {
-    alignItems: 'flex-start',
+    alignItems: 'center',
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.two,
