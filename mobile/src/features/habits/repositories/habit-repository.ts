@@ -159,6 +159,10 @@ export const HabitRepository = {
     return rows.map(mapHabitRow);
   },
 
+  async listVisibleForHistory(): Promise<Habit[]> {
+    return this.listAll();
+  },
+
   async findById(id: string): Promise<Habit | null> {
     const database = await getDatabaseAsync();
     const row = await database.getFirstAsync<HabitRow>('SELECT * FROM habits WHERE id = ?;', id);
@@ -213,14 +217,14 @@ export const HabitRepository = {
     return next;
   },
 
-  async deleteById(id: string): Promise<boolean> {
+  async deleteById(id: string, deletedAt = new Date().toISOString()): Promise<boolean> {
     const database = await getDatabaseAsync();
     const now = new Date().toISOString();
     const result = await database.runAsync(
       `UPDATE habits
        SET is_active = 0, deleted_at = ?, updated_at = ?
        WHERE id = ?;`,
-      now,
+      deletedAt,
       now,
       id
     );

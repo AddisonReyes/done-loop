@@ -101,6 +101,7 @@ describe('useTodos', () => {
       notificationsEnabled: true,
       privacyPolicyUrl: 'https://done-loop.com/privacy',
       termsUrl: 'https://done-loop.pages.dev/terms',
+      lastActiveRoute: '/habits',
       theme: 'system',
     });
     jest.mocked(NotificationService.cancelAsync).mockResolvedValue(undefined);

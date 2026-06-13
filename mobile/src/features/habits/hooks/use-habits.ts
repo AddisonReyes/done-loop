@@ -19,6 +19,7 @@ import { getHabitsDueOnDate } from '../services/habit-recurrence';
 import { sortHabitsByRecurrenceDisplayOrder } from '../services/habit-sort';
 
 export type HabitFilter = 'all' | 'pendingToday' | 'completedToday';
+export type HabitDeleteMode = 'fromDate' | 'allHistory';
 
 type AsyncStatus = 'idle' | 'loading' | 'error';
 type LoadOptions = {
@@ -102,7 +103,7 @@ export function useHabits() {
         setStatus('loading');
       }
       const [activeHabits, completions] = await Promise.all([
-        HabitRepository.listActive(),
+        HabitRepository.listVisibleForHistory(),
         HabitCompletionRepository.listByDateRange(todayKey, todayKey),
       ]);
 
@@ -176,7 +177,10 @@ export function useHabits() {
       );
     }
 
-    return sortHabitsByRecurrenceDisplayOrder(habits);
+    return sortHabitsByRecurrenceDisplayOrder([
+      ...habits.filter((habit) => habit.isActive && !habit.deletedAt),
+      ...habits.filter((habit) => !habit.isActive && !habit.deletedAt),
+    ]);
   }, [completedHabitIds, filter, habits, habitsDueToday]);
 
   const createHabitFromDraft = useCallback(
@@ -238,7 +242,7 @@ export function useHabits() {
           notificationId: undefined,
         });
         const notificationId =
-          updatedHabit && settings.notificationsEnabled && nextRemindersEnabled
+          updatedHabit && updatedHabit.isActive && settings.notificationsEnabled && nextRemindersEnabled
             ? await NotificationService.scheduleHabitReminderAsync({
                 habit: updatedHabit,
                 language,
@@ -261,14 +265,21 @@ export function useHabits() {
   );
 
   const deleteHabit = useCallback(
-    async (habitId: string) => {
+    async (habitId: string, options: { mode?: HabitDeleteMode; effectiveDateKey?: string } = {}) => {
       try {
         setErrorMessage(null);
         const existing = habits.find((habit) => habit.id === habitId) ?? (await HabitRepository.findById(habitId));
         if (existing) {
           await NotificationService.cancelHabitRemindersAsync(existing.id, existing.notificationId);
         }
-        await HabitRepository.deleteById(habitId);
+        if (options.mode === 'allHistory') {
+          await HabitCompletionRepository.deleteByHabitId(habitId);
+          await HabitRepository.deleteById(habitId, options.effectiveDateKey ?? todayKey);
+        } else {
+          const effectiveDateKey = options.effectiveDateKey ?? todayKey;
+          await HabitCompletionRepository.deleteByHabitIdFromDate(habitId, effectiveDateKey);
+          await HabitRepository.deleteById(habitId, effectiveDateKey);
+        }
         await loadHabits({ silent: true });
         await loadMonthHistory();
         emitAppEvent('habitsChanged', { source: eventSourceRef.current });
@@ -278,7 +289,7 @@ export function useHabits() {
         return false;
       }
     },
-    [habits, loadHabits, loadMonthHistory, t]
+    [habits, loadHabits, loadMonthHistory, t, todayKey]
   );
 
   const toggleTodayCompletion = useCallback(
@@ -297,7 +308,7 @@ export function useHabits() {
         });
         const settings = await SettingsRepository.get();
         const notificationId =
-          habit && settings.notificationsEnabled && habit.remindersEnabled
+            habit && habit.isActive && settings.notificationsEnabled && habit.remindersEnabled
             ? await NotificationService.scheduleHabitReminderAsync({
                 habit,
                 language,
@@ -341,7 +352,7 @@ export function useHabits() {
           await NotificationService.cancelHabitRemindersAsync(habit.id, habit.notificationId);
           const settings = await SettingsRepository.get();
           const notificationId =
-            settings.notificationsEnabled && habit.remindersEnabled
+            habit.isActive && settings.notificationsEnabled && habit.remindersEnabled
               ? await NotificationService.scheduleHabitReminderAsync({
                   habit,
                   language,

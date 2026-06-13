@@ -3,6 +3,7 @@ export type UserAccentColorPreference = 'purple' | 'blue' | 'green' | 'red' | 'y
 export type UserAppBackgroundPreference = 'none' | 'gradient' | 'grid' | 'solar';
 export type UserLanguagePreference = 'en' | 'es';
 export type UserDateFormatPreference = 'iso' | 'mdy' | 'dmy' | 'long';
+export type UserLastActiveRoute = '/habits' | '/todos' | '/calendar' | '/settings';
 
 export type UserSettings = {
   notificationsEnabled: boolean;
@@ -14,6 +15,7 @@ export type UserSettings = {
   dateFormat: UserDateFormatPreference;
   privacyPolicyUrl: string;
   termsUrl: string;
+  lastActiveRoute: UserLastActiveRoute;
 };
 
 export type UpdateUserSettingsInput = Partial<UserSettings>;

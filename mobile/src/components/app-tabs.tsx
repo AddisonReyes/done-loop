@@ -1,12 +1,16 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { usePathname } from 'expo-router';
 import { Tabs, TabList, TabSlot, TabTrigger, TabTriggerSlotProps, TabListProps } from 'expo-router/ui';
 import type { ComponentProps } from 'react';
+import { useEffect } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/i18n';
+import { SettingsRepository } from '@/features/settings/repositories/settings-repository';
+import type { UserLastActiveRoute } from '@/features/settings/types';
 
 type TabIconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 
@@ -19,6 +23,14 @@ const iconByRoute: Record<string, TabIconName> = {
 
 export default function AppTabs() {
   const { t } = useTranslation();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    const route = getTopLevelRoute(pathname);
+    if (route) {
+      void SettingsRepository.update({ lastActiveRoute: route }).catch(() => undefined);
+    }
+  }, [pathname]);
 
   return (
     <Tabs>
@@ -41,6 +53,14 @@ export default function AppTabs() {
       </TabList>
     </Tabs>
   );
+}
+
+function getTopLevelRoute(pathname: string): UserLastActiveRoute | null {
+  if (pathname === '/habits' || pathname.startsWith('/habits/')) return '/habits';
+  if (pathname === '/todos' || pathname.startsWith('/todos/')) return '/todos';
+  if (pathname === '/calendar' || pathname.startsWith('/calendar/')) return '/calendar';
+  if (pathname === '/settings' || pathname.startsWith('/settings/')) return '/settings';
+  return null;
 }
 
 export function TabButton({

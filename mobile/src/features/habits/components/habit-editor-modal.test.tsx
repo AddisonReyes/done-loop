@@ -101,6 +101,7 @@ describe('HabitEditorModal', () => {
       monthlyDays: undefined,
       remindersEnabled: false,
       reminderTime: undefined,
+      isActive: true,
     });
   });
 
@@ -123,5 +124,43 @@ describe('HabitEditorModal', () => {
       remindersEnabled: true,
       reminderTime: '08:30',
     }));
+  });
+
+  it('shows archive toggle only when editing', () => {
+    const habit = {
+      id: 'habit_1',
+      name: 'Read',
+      recurrenceType: 'daily' as const,
+      remindersEnabled: false,
+      isActive: true,
+      createdAt: '2026-06-01T00:00:00.000Z',
+      updatedAt: '2026-06-01T00:00:00.000Z',
+    };
+
+    const { rerender } = render(<HabitEditorModal visible onClose={jest.fn()} onSubmit={jest.fn()} />);
+    expect(screen.queryByText('Archived')).toBeNull();
+
+    rerender(<HabitEditorModal habit={habit} visible onClose={jest.fn()} onSubmit={jest.fn()} />);
+    expect(screen.getByText('Archived')).toBeTruthy();
+  });
+
+  it('submits archived edits as inactive', () => {
+    const onSubmit = jest.fn();
+    const habit = {
+      id: 'habit_1',
+      name: 'Read',
+      recurrenceType: 'daily' as const,
+      remindersEnabled: false,
+      isActive: true,
+      createdAt: '2026-06-01T00:00:00.000Z',
+      updatedAt: '2026-06-01T00:00:00.000Z',
+    };
+
+    render(<HabitEditorModal habit={habit} visible onClose={jest.fn()} onSubmit={onSubmit} />);
+
+    fireEvent(screen.getAllByRole('switch')[1], 'valueChange', true);
+    fireEvent.press(screen.getByRole('button', { name: 'Save' }));
+
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ isActive: false }));
   });
 });

@@ -141,4 +141,14 @@ export const HabitCompletionRepository = {
     const result = await database.runAsync('DELETE FROM habit_completions WHERE habit_id = ?;', habitId);
     return result.changes;
   },
+
+  async deleteByHabitIdFromDate(habitId: string, date: string): Promise<number> {
+    if (!isDateKey(date)) {
+      throw new Error('Invalid habit completion date.');
+    }
+
+    const database = await getDatabaseAsync();
+    const result = await database.runAsync('DELETE FROM habit_completions WHERE habit_id = ? AND date >= ?;', habitId, date);
+    return result.changes;
+  },
 };

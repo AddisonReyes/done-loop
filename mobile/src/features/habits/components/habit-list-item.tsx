@@ -36,6 +36,7 @@ export function HabitListItem({
   const { animationsEnabled } = useThemePreference();
   const { t } = useTranslation();
   const statusLabel = statusLabelOverride ?? (completedToday ? t('habits.completedToday') : t('habits.pendingToday'));
+  const isArchived = !habit.isActive && !habit.deletedAt;
   const recurrenceLabel = t(`habits.recurrences.${habit.recurrenceType}`);
   const recurrenceDetail = getHabitRecurrenceDetail(habit, t);
   const cardScale = useSharedValue(1);
@@ -88,7 +89,7 @@ export function HabitListItem({
         {habit.description ? <ThemedText type="small">{habit.description}</ThemedText> : null}
 
         <View style={styles.details}>
-          <DetailRow label={t('habits.detail.status')} value={statusLabel} />
+          <DetailRow label={t('habits.detail.status')} value={statusLabel} forceValueRight={isArchived} />
           <DetailRow label={t('habits.detail.recurrence')} value={recurrenceLabel} />
           {recurrenceDetail ? (
             <DetailRow label={recurrenceDetail.label} value={recurrenceDetail.value} />
@@ -169,13 +170,21 @@ function IconAction({
   );
 }
 
-function DetailRow({ label, value }: { label: string; value: string }) {
+function DetailRow({
+  forceValueRight = false,
+  label,
+  value,
+}: {
+  forceValueRight?: boolean;
+  label: string;
+  value: string;
+}) {
   return (
     <View style={styles.detailRow}>
       <ThemedText type="small" themeColor="textSecondary" style={styles.detailLabel}>
         {label}
       </ThemedText>
-      <ThemedText type="smallBold" style={styles.detailValue}>
+      <ThemedText type="smallBold" style={[styles.detailValue, forceValueRight && styles.detailValueForceRight]}>
         {value}
       </ThemedText>
     </View>
@@ -243,6 +252,9 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     minWidth: 0,
     textAlign: 'right',
+  },
+  detailValueForceRight: {
+    marginLeft: 'auto',
   },
   pressed: {
     opacity: 0.72,

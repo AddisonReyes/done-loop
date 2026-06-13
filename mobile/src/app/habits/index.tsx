@@ -39,21 +39,23 @@ export default function HabitsScreen() {
     monthHistoryDays,
     monthLabel,
     monthlyHabitDateKeys,
-    pendingCount,
     setFilter,
     todayKey,
     toggleCompletionForDate,
-    totalCompletedToday,
     visibleHabits,
-    habits,
     updateHabitFromDraft,
+    habits,
   } = useHabits();
-  const selectedHabits = useMemo(
-    () => (selectedDateKey ? getHabitsForDate(selectedDateKey) : []),
-    [getHabitsForDate, selectedDateKey],
-  );
   const hasSelectedDateFilter = !!selectedDateKey;
   const listedDateKey = selectedDateKey ?? todayKey;
+  const listedHabitsDue = useMemo(
+    () => getHabitsForDate(listedDateKey),
+    [getHabitsForDate, listedDateKey],
+  );
+  const selectedHabits = useMemo(
+    () => (selectedDateKey ? listedHabitsDue : []),
+    [listedHabitsDue, selectedDateKey],
+  );
   const completedHabitIdsForListedDate = useMemo(
     () => getCompletedHabitIdsForDate(listedDateKey),
     [getCompletedHabitIdsForDate, listedDateKey],
@@ -64,13 +66,13 @@ export default function HabitsScreen() {
     }
 
     if (filter === "completedToday") {
-      return selectedHabits.filter((habit) =>
+      return listedHabitsDue.filter((habit) =>
         completedHabitIdsForListedDate.has(habit.id),
       );
     }
 
     if (filter === "pendingToday") {
-      return selectedHabits.filter(
+      return listedHabitsDue.filter(
         (habit) => !completedHabitIdsForListedDate.has(habit.id),
       );
     }
@@ -80,16 +82,22 @@ export default function HabitsScreen() {
     completedHabitIdsForListedDate,
     filter,
     hasSelectedDateFilter,
+    listedHabitsDue,
     selectedHabits,
     visibleHabits,
   ]);
   const dueHabitIdsForListedDate = useMemo(() => {
     if (hasSelectedDateFilter) {
-      return new Set(selectedHabits.map((habit) => habit.id));
+      return new Set(listedHabitsDue.map((habit) => habit.id));
     }
 
-    return new Set(getHabitsForDate(listedDateKey).map((habit) => habit.id));
-  }, [getHabitsForDate, hasSelectedDateFilter, listedDateKey, selectedHabits]);
+    return new Set(listedHabitsDue.map((habit) => habit.id));
+  }, [hasSelectedDateFilter, listedHabitsDue]);
+  const totalCompletedForListedDate = useMemo(
+    () => listedHabitsDue.filter((habit) => completedHabitIdsForListedDate.has(habit.id)).length,
+    [completedHabitIdsForListedDate, listedHabitsDue],
+  );
+  const pendingForListedDate = listedHabitsDue.length - totalCompletedForListedDate;
 
   const selectedDateEmptyMessage =
     hasSelectedDateFilter && selectedHabits.length === 0
@@ -98,6 +106,10 @@ export default function HabitsScreen() {
 
   const listedStatusLabel = useCallback(
     (habit: Habit) => {
+      if (!habit.isActive && !habit.deletedAt) {
+        return t("habits.archived");
+      }
+
       if (!dueHabitIdsForListedDate.has(habit.id)) {
         return t("habits.notScheduledToday");
       }
@@ -152,17 +164,24 @@ export default function HabitsScreen() {
   }, [goToNextMonth]);
 
   const confirmDeleteHabit = useCallback((habit: Habit) => {
-    Alert.alert(t("habits.delete"), habit.name, [
+    Alert.alert(t("habits.deleteConfirmTitle"), t("habits.deleteConfirmMessage"), [
       { text: t("habits.cancel"), style: "cancel" },
       {
-        text: t("habits.delete"),
+        text: t("habits.deleteFromDate"),
         style: "destructive",
         onPress: () => {
-          void deleteHabit(habit.id);
+          void deleteHabit(habit.id, { mode: "fromDate", effectiveDateKey: listedDateKey });
+        },
+      },
+      {
+        text: t("habits.deleteAllHistory"),
+        style: "destructive",
+        onPress: () => {
+          void deleteHabit(habit.id, { mode: "allHistory", effectiveDateKey: listedDateKey });
         },
       },
     ]);
-  }, [deleteHabit, t]);
+  }, [deleteHabit, listedDateKey, t]);
 
   const listHeader = (
     <>
@@ -177,7 +196,7 @@ export default function HabitsScreen() {
           ]}
         >
           <ThemedText type="subtitle" style={styles.summaryNumber}>
-            {totalCompletedToday}
+            {totalCompletedForListedDate}
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             {t("habits.completedSummary")}
@@ -190,7 +209,7 @@ export default function HabitsScreen() {
           ]}
         >
           <ThemedText type="subtitle" style={styles.summaryNumber}>
-            {pendingCount}
+            {pendingForListedDate}
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             {t("habits.pendingSummary")}
@@ -286,7 +305,7 @@ export default function HabitsScreen() {
           <HabitListItem
             habit={item}
             completedToday={completedHabitIdsForListedDate.has(item.id)}
-            completionDisabled={!dueHabitIdsForListedDate.has(item.id)}
+            completionDisabled={!item.isActive || !dueHabitIdsForListedDate.has(item.id)}
             statusLabel={listedStatusLabel(item)}
             onToggleToday={() => {
               handleToggleHabit(item.id);

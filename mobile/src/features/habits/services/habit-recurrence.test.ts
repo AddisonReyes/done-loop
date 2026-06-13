@@ -88,7 +88,7 @@ describe('habit recurrence', () => {
     expect(isHabitDueOnDate(habit, '2026-04-29')).toBe(false);
   });
 
-  it('filters inactive, deleted, and non-due habits', () => {
+  it('filters inactive, deleted from cutoff, and non-due habits', () => {
     expect(
       getHabitsDueOnDate(
         [
@@ -100,5 +100,18 @@ describe('habit recurrence', () => {
         '2026-05-02'
       )
     ).toHaveLength(1);
+  });
+
+  it('keeps deleted habits due before their delete cutoff only', () => {
+    const habit = createHabit({ deletedAt: '2026-05-03' });
+
+    expect(isHabitDueOnDate(habit, '2026-05-02')).toBe(true);
+    expect(isHabitDueOnDate(habit, '2026-05-03')).toBe(false);
+    expect(isHabitDueOnDate(habit, '2026-05-04')).toBe(false);
+  });
+
+  it('treats archived habits as inactive until unarchived', () => {
+    expect(isHabitDueOnDate(createHabit({ isActive: false }), '2026-05-02')).toBe(false);
+    expect(isHabitDueOnDate(createHabit({ isActive: true }), '2026-05-02')).toBe(true);
   });
 });

@@ -12,13 +12,15 @@ import { getHabitDayIntensity, useHabits } from './use-habits';
 jest.mock('@/features/habits/repositories', () => ({
   HabitCompletionRepository: {
     listByDateRange: jest.fn(),
+    deleteByHabitId: jest.fn(),
+    deleteByHabitIdFromDate: jest.fn(),
     upsert: jest.fn(),
   },
   HabitRepository: {
     create: jest.fn(),
     deleteById: jest.fn(),
     findById: jest.fn(),
-    listActive: jest.fn(),
+    listVisibleForHistory: jest.fn(),
     update: jest.fn(),
   },
 }));
@@ -88,7 +90,7 @@ describe('useHabits', () => {
     jest.useFakeTimers();
     activeHabits = [];
     completions = [];
-    jest.mocked(HabitRepository.listActive).mockImplementation(async () => activeHabits);
+    jest.mocked(HabitRepository.listVisibleForHistory).mockImplementation(async () => activeHabits);
     jest.mocked(HabitRepository.findById).mockImplementation(async (id) => activeHabits.find((habit) => habit.id === id) ?? null);
     jest.mocked(HabitRepository.create).mockImplementation(async (input) => {
       const habit: Habit = {
@@ -134,6 +136,16 @@ describe('useHabits', () => {
       completions = [completion];
       return completion;
     });
+    jest.mocked(HabitCompletionRepository.deleteByHabitId).mockImplementation(async (habitId) => {
+      const before = completions.length;
+      completions = completions.filter((completion) => completion.habitId !== habitId);
+      return before - completions.length;
+    });
+    jest.mocked(HabitCompletionRepository.deleteByHabitIdFromDate).mockImplementation(async (habitId, date) => {
+      const before = completions.length;
+      completions = completions.filter((completion) => completion.habitId !== habitId || completion.date < date);
+      return before - completions.length;
+    });
     jest.mocked(SettingsRepository.get).mockResolvedValue({
       animationsEnabled: true,
       accentColor: 'purple',
@@ -143,6 +155,7 @@ describe('useHabits', () => {
       notificationsEnabled: true,
       privacyPolicyUrl: 'https://done-loop.com/privacy',
       termsUrl: 'https://done-loop.pages.dev/terms',
+      lastActiveRoute: '/habits',
       theme: 'system',
     });
     jest.mocked(NotificationService.cancelHabitRemindersAsync).mockResolvedValue(undefined);
@@ -195,7 +208,7 @@ describe('useHabits', () => {
       language: 'en',
     });
     expect(HabitRepository.update).toHaveBeenCalledWith('habit_created', { notificationId: 'habit_notification' });
-    expect(HabitRepository.listActive).toHaveBeenCalledTimes(2);
+    expect(HabitRepository.listVisibleForHistory).toHaveBeenCalledTimes(2);
   });
 
   it('toggles today completion and skips today when rescheduling reminders', async () => {
@@ -274,11 +287,49 @@ describe('useHabits', () => {
     });
 
     expect(NotificationService.cancelHabitRemindersAsync).toHaveBeenCalledWith('habit_1', 'old_notification');
-    expect(HabitRepository.deleteById).toHaveBeenCalledWith('habit_1');
+    expect(HabitCompletionRepository.deleteByHabitIdFromDate).toHaveBeenCalledWith('habit_1', '2026-06-03');
+    expect(HabitRepository.deleteById).toHaveBeenCalledWith('habit_1', '2026-06-03');
+  });
+
+  it('does not count archived habits as pending for today', async () => {
+    activeHabits = [dailyHabit, { ...createDailyHabit('habit_archived'), isActive: false }];
+
+    const { result } = await renderUseHabits();
+
+    expect(result.current.pendingCount).toBe(1);
+    expect(result.current.visibleHabits.map((habit) => habit.id)).toEqual(['habit_1', 'habit_archived']);
+  });
+
+  it('can unarchive a habit and reschedule reminders', async () => {
+    activeHabits = [{ ...dailyHabit, isActive: false, notificationId: 'old_notification' }];
+    const { result } = await renderUseHabits();
+
+    await act(async () => {
+      await expect(result.current.updateHabitFromDraft('habit_1', { isActive: true })).resolves.toBe(true);
+    });
+
+    expect(NotificationService.cancelHabitRemindersAsync).toHaveBeenCalledWith('habit_1', 'old_notification');
+    expect(NotificationService.scheduleHabitReminderAsync).toHaveBeenCalledWith({
+      habit: expect.objectContaining({ id: 'habit_1', isActive: true }),
+      language: 'en',
+    });
+  });
+
+  it('deletes all history for a habit', async () => {
+    activeHabits = [dailyHabit];
+    completions = [createCompletion('habit_1', '2026-06-01')];
+    const { result } = await renderUseHabits();
+
+    await act(async () => {
+      await expect(result.current.deleteHabit('habit_1', { mode: 'allHistory', effectiveDateKey: '2026-06-03' })).resolves.toBe(true);
+    });
+
+    expect(HabitCompletionRepository.deleteByHabitId).toHaveBeenCalledWith('habit_1');
+    expect(HabitRepository.deleteById).toHaveBeenCalledWith('habit_1', '2026-06-03');
   });
 
   it('surfaces initial load errors without crashing consumers', async () => {
-    jest.mocked(HabitRepository.listActive).mockRejectedValueOnce(new Error('database offline'));
+    jest.mocked(HabitRepository.listVisibleForHistory).mockRejectedValueOnce(new Error('database offline'));
 
     const rendered = renderHook(() => useHabits());
     await act(async () => {

@@ -47,7 +47,15 @@ function getDaysSinceStart(habit: Habit, dateKey: string): number | null {
 }
 
 export function isHabitDueOnDate(habit: Habit, dateKey: string): boolean {
-  if (!habit.isActive || habit.deletedAt || !isDateKey(dateKey)) {
+  if (!isDateKey(dateKey)) {
+    return false;
+  }
+
+  if (habit.deletedAt && dateKey >= habit.deletedAt.slice(0, 10)) {
+    return false;
+  }
+
+  if (!habit.isActive && !habit.deletedAt) {
     return false;
   }
 

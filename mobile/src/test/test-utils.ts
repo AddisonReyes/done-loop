@@ -50,6 +50,7 @@ export const defaultTestSettings: UserSettings = {
   notificationsEnabled: false,
   privacyPolicyUrl: 'https://done-loop.com/privacy',
   termsUrl: 'https://done-loop.pages.dev/terms',
+  lastActiveRoute: '/habits',
   theme: 'system',
 };
 

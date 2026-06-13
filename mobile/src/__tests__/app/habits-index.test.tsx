@@ -170,6 +170,9 @@ describe('HabitsScreen', () => {
     const destructiveAction = alertSpy.mock.calls[0]?.[2]?.find((button) => button.style === 'destructive');
     destructiveAction?.onPress?.();
 
-    expect(deleteHabit).toHaveBeenCalledWith('habit_1');
+    expect(deleteHabit).toHaveBeenCalledWith('habit_1', {
+      mode: 'fromDate',
+      effectiveDateKey: '2026-06-03',
+    });
   });
 });

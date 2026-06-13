@@ -12,6 +12,7 @@ import type {
   UserAppBackgroundPreference,
   UserDateFormatPreference,
   UserLanguagePreference,
+  UserLastActiveRoute,
   UserSettings,
   UserThemePreference,
 } from '../types';
@@ -31,6 +32,7 @@ type UserSettingsRow = {
   date_format: UserDateFormatPreference;
   privacy_policy_url: string | null;
   terms_url: string | null;
+  last_active_route?: string | null;
 };
 
 const defaultSettings: UserSettings = {
@@ -43,6 +45,7 @@ const defaultSettings: UserSettings = {
   dateFormat: 'dmy',
   privacyPolicyUrl: PrivacyPolicyUrl,
   termsUrl: TermsUrl,
+  lastActiveRoute: '/habits',
 };
 
 const themePreferences = new Set<UserThemePreference>(['system', 'light', 'dark']);
@@ -50,6 +53,7 @@ const accentColorPreferences = new Set<UserAccentColorPreference>(['purple', 'bl
 const appBackgroundPreferences = new Set<UserAppBackgroundPreference>(['none', 'gradient', 'grid', 'solar']);
 const languagePreferences = new Set<UserLanguagePreference>(['en', 'es']);
 const dateFormatPreferences = new Set<UserDateFormatPreference>(['iso', 'mdy', 'dmy', 'long']);
+const lastActiveRoutes = new Set<UserLastActiveRoute>(['/habits', '/todos', '/calendar', '/settings']);
 
 function mapUserSettingsRow(row: UserSettingsRow): UserSettings {
   return {
@@ -62,6 +66,9 @@ function mapUserSettingsRow(row: UserSettingsRow): UserSettings {
     dateFormat: dateFormatPreferences.has(row.date_format) ? row.date_format : defaultSettings.dateFormat,
     privacyPolicyUrl: optionalString(row.privacy_policy_url) ?? PrivacyPolicyUrl,
     termsUrl: optionalString(row.terms_url) ?? TermsUrl,
+    lastActiveRoute: lastActiveRoutes.has(row.last_active_route as UserLastActiveRoute)
+      ? (row.last_active_route as UserLastActiveRoute)
+      : defaultSettings.lastActiveRoute,
   };
 }
 
@@ -76,7 +83,7 @@ export const SettingsRepository = {
   async get(): Promise<UserSettings> {
     const database = await getDatabaseAsync();
     const row = await database.getFirstAsync<UserSettingsRow>(
-      `SELECT notifications_enabled, animations_enabled, theme, accent_color, app_background, language, date_format, privacy_policy_url, terms_url
+      `SELECT notifications_enabled, animations_enabled, theme, accent_color, app_background, language, date_format, privacy_policy_url, terms_url, last_active_route
        FROM user_settings
        WHERE id = 1;`
     );
@@ -91,7 +98,7 @@ export const SettingsRepository = {
   async update(input: UpdateUserSettingsInput): Promise<UserSettings> {
     const database = await getDatabaseAsync();
     const existingRow = await database.getFirstAsync<UserSettingsRow>(
-      `SELECT notifications_enabled, animations_enabled, theme, accent_color, app_background, language, date_format, privacy_policy_url, terms_url
+      `SELECT notifications_enabled, animations_enabled, theme, accent_color, app_background, language, date_format, privacy_policy_url, terms_url, last_active_route
        FROM user_settings
        WHERE id = 1;`
     );
@@ -115,9 +122,10 @@ export const SettingsRepository = {
         plan,
         privacy_policy_url,
         terms_url,
+        last_active_route,
         created_at,
         updated_at
-      ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         notifications_enabled = excluded.notifications_enabled,
         animations_enabled = excluded.animations_enabled,
@@ -129,6 +137,7 @@ export const SettingsRepository = {
         plan = excluded.plan,
         privacy_policy_url = excluded.privacy_policy_url,
         terms_url = excluded.terms_url,
+        last_active_route = excluded.last_active_route,
         updated_at = excluded.updated_at;`,
       toSQLiteBoolean(next.notificationsEnabled),
       toSQLiteBoolean(next.animationsEnabled),
@@ -140,6 +149,7 @@ export const SettingsRepository = {
       FreePlan,
       nullableString(next.privacyPolicyUrl),
       nullableString(next.termsUrl),
+      next.lastActiveRoute,
       now,
       now
     );

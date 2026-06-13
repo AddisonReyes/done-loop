@@ -4,6 +4,7 @@ export type {
   UserAppBackgroundPreference,
   UserDateFormatPreference,
   UserLanguagePreference,
+  UserLastActiveRoute,
   UserSettings,
   UserThemePreference,
 } from './user-settings';

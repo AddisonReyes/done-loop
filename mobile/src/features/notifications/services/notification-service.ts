@@ -149,10 +149,12 @@ async function configureHabitReminderCategoryAsync(
     {
       identifier: markHabitCompleteActionId,
       buttonTitle: translations[language].notifications.markHabitComplete,
+      options: { opensAppToForeground: false },
     },
     {
       identifier: remindHabitIn30MinutesActionId,
       buttonTitle: translations[language].notifications.remindIn30Minutes,
+      options: { opensAppToForeground: false },
     },
   ]);
 }
@@ -319,7 +321,9 @@ async function handleNotificationResponseAsync(
   const language = getLanguageFromResponse(response);
   const dateKey = getDateKeyFromResponse(response) ?? toDateKey(new Date());
 
-  if (type === 'todo_reminder') {
+  const isDefaultAction = response.actionIdentifier === 'default' || response.actionIdentifier === undefined;
+
+  if (type === 'todo_reminder' && isDefaultAction) {
     router.navigate('/todos');
     return;
   }
@@ -338,7 +342,9 @@ async function handleNotificationResponseAsync(
     return;
   }
 
-  router.navigate('/habits');
+  if (isDefaultAction) {
+    router.navigate('/habits');
+  }
 }
 
 async function getLastNotificationResponseAsync(

@@ -62,6 +62,7 @@ const enabledSettings: UserSettings = {
   notificationsEnabled: true,
   privacyPolicyUrl: 'https://done-loop.com/privacy',
   termsUrl: 'https://done-loop.pages.dev/terms',
+  lastActiveRoute: '/habits',
   theme: 'system',
 };
 
@@ -237,6 +238,43 @@ describe('NotificationService', () => {
     expect(notifications.scheduleNotificationAsync).toHaveBeenCalledTimes(14);
   });
 
+  it('configures habit actions to avoid foregrounding the app', async () => {
+    await expect(NotificationService.configureForegroundHandlingAsync()).resolves.toBe(true);
+
+    expect(notifications.setNotificationCategoryAsync).toHaveBeenCalledWith('habit_reminder', [
+      expect.objectContaining({
+        identifier: 'mark_habit_complete',
+        options: { opensAppToForeground: false },
+      }),
+      expect.objectContaining({
+        identifier: 'remind_habit_in_30_minutes',
+        options: { opensAppToForeground: false },
+      }),
+    ]);
+  });
+
+  it('routes default habit notification taps to the habits screen', async () => {
+    const { router } = jest.requireMock('expo-router') as { router: { navigate: jest.Mock } };
+    let listener: ((response: unknown) => void) | undefined;
+    jest.mocked(notifications.addNotificationResponseReceivedListener).mockImplementation((callback) => {
+      listener = callback as (response: unknown) => void;
+      return { remove: jest.fn() };
+    });
+
+    await expect(NotificationService.configureResponseHandlingAsync()).resolves.toBe(true);
+    listener?.({
+      actionIdentifier: 'default',
+      notification: {
+        request: {
+          content: { data: { type: 'habit_reminder', habitId: 'habit_1', dateKey: '2026-06-02' } },
+          identifier: 'notification_1',
+        },
+      },
+    });
+
+    expect(router.navigate).toHaveBeenCalledWith('/habits');
+  });
+
   it('handles cold-start todo notification responses', async () => {
     const { router } = jest.requireMock('expo-router') as { router: { navigate: jest.Mock } };
     notifications.getLastNotificationResponseAsync.mockResolvedValue({
@@ -393,6 +431,7 @@ describe('NotificationService', () => {
   });
 
   it('marks habits complete from delivered actions without rescheduling when notifications are disabled', async () => {
+    const { router } = jest.requireMock('expo-router') as { router: { navigate: jest.Mock } };
     const { HabitCompletionRepository, HabitRepository } = jest.requireMock('@/features/habits/repositories') as {
       HabitCompletionRepository: { upsert: jest.Mock };
       HabitRepository: { update: jest.Mock };
@@ -428,6 +467,7 @@ describe('NotificationService', () => {
     expect(notifications.scheduleNotificationAsync).not.toHaveBeenCalled();
     expect(notifications.getPermissionsAsync).not.toHaveBeenCalled();
     expect(HabitRepository.update).toHaveBeenCalledWith('habit_1', { notificationId: undefined });
+    expect(router.navigate).not.toHaveBeenCalled();
   });
 
   it('ignores habit actions that are missing a valid habit id', async () => {
@@ -491,6 +531,7 @@ describe('NotificationService', () => {
   });
 
   it('dismisses habit snooze actions without rescheduling when notifications are disabled', async () => {
+    const { router } = jest.requireMock('expo-router') as { router: { navigate: jest.Mock } };
     const { HabitCompletionRepository, HabitRepository } = jest.requireMock('@/features/habits/repositories') as {
       HabitCompletionRepository: { upsert: jest.Mock };
       HabitRepository: { update: jest.Mock };
@@ -522,6 +563,7 @@ describe('NotificationService', () => {
     expect(notifications.scheduleNotificationAsync).not.toHaveBeenCalled();
     expect(notifications.getPermissionsAsync).not.toHaveBeenCalled();
     expect(HabitRepository.update).toHaveBeenCalledWith('habit_1', { notificationId: undefined });
+    expect(router.navigate).not.toHaveBeenCalled();
   });
 
   it('does not snooze completed habits', async () => {

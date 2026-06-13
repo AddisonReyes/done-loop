@@ -22,6 +22,7 @@ type HabitDraft = {
   monthlyDays: number[];
   remindersEnabled: boolean;
   reminderTime?: string;
+  isActive: boolean;
 };
 
 type HabitEditorModalProps = {
@@ -37,6 +38,7 @@ type HabitEditorModalProps = {
     monthlyDays?: number[];
     remindersEnabled: boolean;
     reminderTime?: string;
+    isActive?: boolean;
   }) => void;
 };
 
@@ -140,6 +142,7 @@ function HabitEditorForm({ habit, onSubmit }: Pick<HabitEditorModalProps, 'habit
     monthlyDays: getDefaultMonthlyDays(habit, today),
     remindersEnabled: habit?.remindersEnabled ?? false,
     reminderTime: habit?.reminderTime,
+    isActive: habit?.isActive ?? true,
   });
   const customIntervalValue = Number(draft.customIntervalDays);
   const hasValidCustomInterval =
@@ -408,6 +411,24 @@ function HabitEditorForm({ habit, onSubmit }: Pick<HabitEditorModalProps, 'habit
             onChange={(reminderTime) => setDraft((current) => ({ ...current, reminderTime }))}
           />
         ) : null}
+        {habit ? (
+          <View style={styles.archiveSection}>
+            <View style={styles.switchRow}>
+              <ThemedText type="smallBold">{t('habits.archived')}</ThemedText>
+              <Switch
+                ios_backgroundColor={theme.backgroundSelected}
+                thumbColor={!draft.isActive ? theme.accent : theme.textMuted}
+                trackColor={{ false: theme.backgroundSelected, true: theme.accentSoft }}
+                value={!draft.isActive}
+                onValueChange={(archived) => setDraft((current) => ({ ...current, isActive: !archived }))}
+                style={styles.switchControl}
+              />
+            </View>
+            <ThemedText type="small" themeColor="textSecondary">
+              {t('habits.archivedHelp')}
+            </ThemedText>
+          </View>
+        ) : null}
         <Pressable
           accessibilityRole="button"
           accessibilityState={{ disabled }}
@@ -423,6 +444,7 @@ function HabitEditorForm({ habit, onSubmit }: Pick<HabitEditorModalProps, 'habit
               monthlyDays: draft.recurrenceType === 'monthly' ? draft.monthlyDays : undefined,
               remindersEnabled: draft.remindersEnabled,
               reminderTime: draft.remindersEnabled ? draft.reminderTime : undefined,
+              isActive: draft.isActive,
             })
           }
           style={[
@@ -592,6 +614,9 @@ const styles = StyleSheet.create({
   },
   switchControl: {
     flexShrink: 0,
+  },
+  archiveSection: {
+    gap: Spacing.one,
   },
   submit: {
     alignItems: 'center',

@@ -18,8 +18,8 @@ type AppBackgroundProps = AppBackgroundSnapshot & {
 
 export function AppBackground({ accent, background, preference, resolvedTheme, style }: AppBackgroundProps) {
   const { height, width } = useWindowDimensions();
-  const gridLineColor = resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.075)' : 'rgba(0, 0, 0, 0.075)';
-  const solarLineColor = resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.105)' : 'rgba(0, 0, 0, 0.105)';
+  const gridLineColor = resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.105)';
+  const solarLineColor = resolvedTheme === 'dark' ? 'rgba(255, 255, 255, 0.145)' : 'rgba(0, 0, 0, 0.13)';
   const gridColumns = useMemo(() => Array.from({ length: Math.ceil(width / GridSize) + 1 }, (_, index) => index), [width]);
   const gridRows = useMemo(() => Array.from({ length: Math.ceil(height / GridSize) + 1 }, (_, index) => index), [height]);
   const solarRings = useMemo(() => {
@@ -48,12 +48,12 @@ export function AppBackground({ accent, background, preference, resolvedTheme, s
       <View pointerEvents="none" style={[styles.backgroundLayer, style]}>
         <CircularGlow
           color={accent}
-          opacity={resolvedTheme === 'dark' ? 0.095 : 0.07}
+          opacity={resolvedTheme === 'dark' ? 0.12 : 0.09}
           style={styles.topRightGlow}
         />
         <CircularGlow
           color={accent}
-          opacity={resolvedTheme === 'dark' ? 0.085 : 0.062}
+          opacity={resolvedTheme === 'dark' ? 0.108 : 0.08}
           style={styles.bottomLeftGlow}
         />
         {gridColumns.map((index) => (
@@ -77,7 +77,7 @@ export function AppBackground({ accent, background, preference, resolvedTheme, s
       <View pointerEvents="none" style={[styles.backgroundLayer, { backgroundColor: background }, style]}>
         <CircularGlow
           color={accent}
-          opacity={resolvedTheme === 'dark' ? 0.23 : 0.17}
+          opacity={resolvedTheme === 'dark' ? 0.27 : 0.205}
           style={styles.solarGlow}
         />
         {solarRings.map((size) => (
